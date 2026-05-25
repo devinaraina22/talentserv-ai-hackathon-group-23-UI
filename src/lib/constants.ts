@@ -38,9 +38,9 @@ export const DAY_NAMES = [
 ] as const;
 
 export const DISCLAIMER =
-  "This system is for appointment booking and basic intake only. It does not provide medical advice, diagnosis, or treatment recommendations. All data must be synthetic.";
+  "MediBook Clinic helps you schedule appointments and share basic health information with your care team. This service does not provide medical advice, diagnosis, or treatment.";
 
-/** Clinic branding for emails & receipts (synthetic demo data) */
+/** Clinic branding for emails & receipts */
 export const CLINIC = {
   name: "MediBook Clinic",
   initials: "MB",

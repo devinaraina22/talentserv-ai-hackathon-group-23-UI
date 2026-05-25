@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const health = upsertHealthIntake(parsed.data);
+    const health = await upsertHealthIntake(parsed.data);
     return NextResponse.json(health);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to save health intake";

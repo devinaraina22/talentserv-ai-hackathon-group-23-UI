@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { APPOINTMENT_TYPES, DEPARTMENTS } from "@/lib/constants";
+import { UI } from "@/lib/user-messages";
 import type { Patient } from "@/lib/types";
+import { AlertBanner } from "@/components/AlertBanner";
 
 export function AppointmentForm({
   patients,
@@ -15,10 +18,10 @@ export function AppointmentForm({
   const router = useRouter();
   const [form, setForm] = useState({
     patient_id: defaultPatientId ?? (patients[0]?.patient_id ?? ""),
-    doctor_or_department: DEPARTMENTS[0],
+    doctor_or_department: DEPARTMENTS[0] as string,
     appointment_date: new Date().toISOString().slice(0, 10),
     appointment_time: "",
-    appointment_type: APPOINTMENT_TYPES[0],
+    appointment_type: APPOINTMENT_TYPES[0] as "In-person" | "Online",
     notes: "",
   });
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
@@ -54,19 +57,10 @@ export function AppointmentForm({
     setLoading(false);
 
     if (!res.ok) {
-      setError(data.error ?? "Failed to book appointment");
+      setError(data.error ?? "We could not book this appointment. Please try again.");
       return;
     }
-    if (data.emailSent) {
-      setError(null);
-      alert(
-        `Appointment ${data.appointment_id} booked! Confirmation email sent to the patient.`
-      );
-    } else {
-      alert(
-        `Appointment ${data.appointment_id} booked. Configure SMTP in .env.local to send confirmation emails (check terminal in dev mode).`
-      );
-    }
+
     router.push(`/appointments/${data.appointment_id}/receipt`);
     router.refresh();
   }
@@ -75,18 +69,16 @@ export function AppointmentForm({
     return (
       <div className="card text-sm text-slate-600">
         Register a patient first.{" "}
-        <a href="/patients/new" className="text-cyan-600 hover:underline">
+        <Link href="/patients/new" className="text-cyan-600 hover:underline">
           Register patient
-        </a>
+        </Link>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="card max-w-xl space-y-4">
-      {error && (
-        <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>
-      )}
+      {error && <AlertBanner type="error" message={error} />}
 
       <div>
         <label className="label">Patient</label>
@@ -134,7 +126,7 @@ export function AppointmentForm({
         <div>
           <label className="label">Available time</label>
           {timeSlots.length === 0 ? (
-            <p className="text-sm text-amber-600">No slots configured for this day</p>
+            <p className="text-sm text-amber-600">{UI.noSlots}</p>
           ) : (
             <select
               className="input-field"

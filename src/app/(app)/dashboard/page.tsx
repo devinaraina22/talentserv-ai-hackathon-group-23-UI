@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   }
   if (!profile) redirect("/onboarding");
 
-  const stats = getDashboardStats(profile.role, profile.email, profile.department);
+  const stats = await getDashboardStats(profile.role, profile.email, profile.department);
 
   const statCards = [
     {

@@ -11,9 +11,9 @@ export default async function ReceiptPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const appointment = getAppointment(id);
+  const appointment = await getAppointment(id);
   if (!appointment) notFound();
-  const patient = getPatient(appointment.patient_id);
+  const patient = await getPatient(appointment.patient_id);
 
   return (
     <div>
@@ -104,7 +104,7 @@ export default async function ReceiptPage({
 
         <div className="pt-4 text-center text-xs text-slate-500">
           <p>{DISCLAIMER}</p>
-          <p className="mt-2">Generated {new Date().toLocaleString()} · Synthetic demo data</p>
+          <p className="mt-2">Generated {new Date().toLocaleString()}</p>
         </div>
       </article>
     </div>

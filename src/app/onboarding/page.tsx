@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ROLES } from "@/lib/auth";
 import { DEPARTMENTS } from "@/lib/constants";
+import { UI } from "@/lib/user-messages";
 import type { UserRole } from "@/lib/types";
 import { Shield, UserCircle } from "lucide-react";
 
@@ -17,7 +18,7 @@ const roleDescriptions: Record<UserRole, string> = {
 export default function OnboardingPage() {
   const router = useRouter();
   const [role, setRole] = useState<UserRole>("Receptionist");
-  const [department, setDepartment] = useState(DEPARTMENTS[0]);
+  const [department, setDepartment] = useState<string>(DEPARTMENTS[0]);
   const [loading, setLoading] = useState(false);
 
   async function handleContinue() {
@@ -42,7 +43,7 @@ export default function OnboardingPage() {
             <Shield className="h-8 w-8" />
             <div>
               <h1 className="font-display text-3xl">Welcome to MediBook</h1>
-              <p className="mt-1 text-cyan-100">Choose your role for this demo session</p>
+              <p className="mt-1 text-cyan-100">{UI.onboardingSubtitle}</p>
             </div>
           </div>
         </div>

@@ -19,8 +19,8 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  deleteAvailability(id);
-  logAudit({
+  await deleteAvailability(id);
+  await logAudit({
     user_id: profile.clerk_user_id,
     user_email: profile.email,
     user_role: profile.role,

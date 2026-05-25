@@ -2,8 +2,9 @@ import Link from "next/link";
 import { PatientForm } from "@/components/PatientForm";
 import { listPatients } from "@/lib/db";
 
-export default function NewPatientPage() {
-  const nextId = `PAT-${String(listPatients().length + 1).padStart(3, "0")}`;
+export default async function NewPatientPage() {
+  const patients = await listPatients();
+  const nextId = `PAT-${String(patients.length + 1).padStart(3, "0")}`;
 
   return (
     <div className="space-y-4">
@@ -11,7 +12,9 @@ export default function NewPatientPage() {
         ← Back to patients
       </Link>
       <h1 className="text-2xl font-bold">Register Patient</h1>
-      <p className="text-sm text-slate-500">Use synthetic data only for demo and testing.</p>
+      <p className="text-sm text-slate-500">
+        Enter patient details to create a new record at MediBook Clinic.
+      </p>
       <PatientForm mode="create" initial={{ patient_id: nextId }} />
     </div>
   );

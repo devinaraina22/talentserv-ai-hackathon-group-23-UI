@@ -33,7 +33,7 @@ export async function POST(
 
   try {
     const reminder = await notifyManualReminder(id, parsed.data.channel);
-    logAudit({
+    await logAudit({
       user_id: profile.clerk_user_id,
       user_email: profile.email,
       user_role: profile.role,

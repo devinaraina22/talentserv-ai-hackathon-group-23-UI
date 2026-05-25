@@ -11,7 +11,7 @@ import {
   listAppointments,
   logReminder,
 } from "./db";
-import type { ReminderChannel, ReminderType } from "./types";
+import type { ReminderChannel } from "./types";
 
 function tomorrowDateString(): string {
   const d = new Date();
@@ -20,12 +20,12 @@ function tomorrowDateString(): string {
 }
 
 export async function notifyBookingConfirmation(appointmentId: string) {
-  const apt = getAppointment(appointmentId);
+  const apt = await getAppointment(appointmentId);
   if (!apt || apt.status === "Cancelled") return null;
-  const patient = getPatient(apt.patient_id);
+  const patient = await getPatient(apt.patient_id);
   if (!patient) return null;
 
-  if (hasReminderBeenSent(appointmentId, "booking_confirmation", "email")) {
+  if (await hasReminderBeenSent(appointmentId, "booking_confirmation", "email")) {
     return null;
   }
 
@@ -43,12 +43,12 @@ export async function notifyBookingConfirmation(appointmentId: string) {
 }
 
 export async function notifyDayBeforeReminder(appointmentId: string) {
-  const apt = getAppointment(appointmentId);
+  const apt = await getAppointment(appointmentId);
   if (!apt || apt.status !== "Booked") return null;
-  const patient = getPatient(apt.patient_id);
+  const patient = await getPatient(apt.patient_id);
   if (!patient) return null;
 
-  if (hasReminderBeenSent(appointmentId, "day_before", "email")) {
+  if (await hasReminderBeenSent(appointmentId, "day_before", "email")) {
     return null;
   }
 
@@ -69,20 +69,20 @@ export async function notifyManualReminder(
   appointmentId: string,
   channel: ReminderChannel
 ) {
-  const apt = getAppointment(appointmentId);
+  const apt = await getAppointment(appointmentId);
   if (!apt) throw new Error("Appointment not found");
-  const patient = getPatient(apt.patient_id);
+  const patient = await getPatient(apt.patient_id);
   if (!patient) throw new Error("Patient not found");
 
   if (channel === "sms") {
-    const message = `SMS to ${patient.phone_number}: Hi ${patient.full_name}, reminder for ${apt.appointment_id} (Patient ${patient.patient_id}) on ${apt.appointment_date} at ${apt.appointment_time}.`;
+    const message = `Reminder: ${patient.full_name}, your appointment ${apt.appointment_id} is on ${apt.appointment_date} at ${apt.appointment_time}. — MediBook Clinic`;
     return logReminder({
       appointment_id: appointmentId,
       channel: "sms",
       recipient: patient.phone_number,
       message,
       reminder_type: "manual",
-      simulated: true,
+      simulated: false,
     });
   }
 
@@ -99,21 +99,20 @@ export async function notifyManualReminder(
   });
 }
 
-/** Send friendly email reminders for all Booked appointments happening tomorrow */
 export async function processDueDayBeforeReminders(): Promise<{
   sent: number;
   skipped: number;
   errors: string[];
 }> {
   const tomorrow = tomorrowDateString();
-  const due = listAppointments({ date: tomorrow, status: "Booked" });
+  const due = await listAppointments({ date: tomorrow, status: "Booked" });
   let sent = 0;
   let skipped = 0;
   const errors: string[] = [];
 
   for (const apt of due) {
     try {
-      if (hasReminderBeenSent(apt.appointment_id, "day_before", "email")) {
+      if (await hasReminderBeenSent(apt.appointment_id, "day_before", "email")) {
         skipped++;
         continue;
       }

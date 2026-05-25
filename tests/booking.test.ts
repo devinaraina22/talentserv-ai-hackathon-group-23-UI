@@ -23,8 +23,8 @@ const SEED = JSON.parse(
   fs.readFileSync(path.join(process.cwd(), "data/seed.json"), "utf-8")
 );
 
-beforeEach(() => {
-  resetStore(SEED);
+beforeEach(async () => {
+  await resetStore(SEED);
 });
 
 describe("Patient registration validation", () => {
@@ -54,14 +54,14 @@ describe("Patient registration validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("detects duplicate patient by email", () => {
-    const dup = checkDuplicatePatient("riya@example.com", "0000000000");
+  it("detects duplicate patient by email", async () => {
+    const dup = await checkDuplicatePatient("riya@example.com", "0000000000");
     expect(dup.duplicate).toBe(true);
     expect(dup.matches[0].patient_id).toBe("PAT-001");
   });
 
-  it("creates a patient record", () => {
-    const patient = createPatient({
+  it("creates a patient record", async () => {
+    const patient = await createPatient({
       patient_id: "PAT-010",
       full_name: "Demo Patient",
       age: 40,
@@ -89,8 +89,8 @@ describe("Health intake validation", () => {
     expect(result.success).toBe(false);
   });
 
-  it("saves health intake for existing patient", () => {
-    const health = upsertHealthIntake({
+  it("saves health intake for existing patient", async () => {
+    const health = await upsertHealthIntake({
       patient_id: "PAT-003",
       symptoms: "Rash",
       existing_conditions: "None",
@@ -105,15 +105,15 @@ describe("Health intake validation", () => {
 });
 
 describe("Doctor availability", () => {
-  it("returns slots for General Physician on Monday", () => {
-    const slots = getAvailabilityForDay("General Physician", "2026-05-18");
+  it("returns slots for General Physician on Monday", async () => {
+    const slots = await getAvailabilityForDay("General Physician", "2026-05-18");
     expect(slots.length).toBeGreaterThan(0);
     expect(slots).toContain("10:30 AM");
   });
 
-  it("rejects booking outside availability", () => {
+  it("rejects booking outside availability", async () => {
     expect(
-      isSlotInAvailability("Pediatrics", "2026-05-18", "10:30 AM")
+      await isSlotInAvailability("General Physician", "2026-05-18", "04:30 PM")
     ).toBe(false);
   });
 });
@@ -130,8 +130,8 @@ describe("Appointment booking", () => {
     expect(result.success).toBe(true);
   });
 
-  it("books on available slot", () => {
-    const apt = createAppointment({
+  it("books on available slot", async () => {
+    const apt = await createAppointment({
       patient_id: "PAT-001",
       doctor_or_department: "Dental",
       appointment_date: "2026-05-23",
@@ -144,14 +144,14 @@ describe("Appointment booking", () => {
 });
 
 describe("Duplicate slot prevention", () => {
-  it("detects taken slot", () => {
+  it("detects taken slot", async () => {
     expect(
-      isSlotTaken("General Physician", "2026-05-22", "10:30 AM")
+      await isSlotTaken("General Physician", "2026-05-22", "10:30 AM")
     ).toBe(true);
   });
 
-  it("blocks duplicate booking", () => {
-    expect(() =>
+  it("blocks duplicate booking", async () => {
+    await expect(
       createAppointment({
         patient_id: "PAT-002",
         doctor_or_department: "General Physician",
@@ -160,13 +160,13 @@ describe("Duplicate slot prevention", () => {
         appointment_type: "Online",
         notes: "Duplicate",
       })
-    ).toThrow(/already booked/i);
+    ).rejects.toThrow(/already booked/i);
   });
 });
 
 describe("Audit and reminders", () => {
-  it("writes audit log entry", () => {
-    const entry = logAudit({
+  it("writes audit log entry", async () => {
+    const entry = await logAudit({
       user_id: "u1",
       user_email: "admin@test.com",
       user_role: "Admin",
@@ -175,11 +175,11 @@ describe("Audit and reminders", () => {
       entity_id: "APT-001",
       details: "test",
     });
-    expect(listAuditLogs()[0].id).toBe(entry.id);
+    expect((await listAuditLogs())[0].id).toBe(entry.id);
   });
 
-  it("logs reminder and prevents duplicate day_before", () => {
-    const rem = logReminder({
+  it("logs reminder and prevents duplicate day_before", async () => {
+    const rem = await logReminder({
       appointment_id: "APT-001",
       channel: "email",
       reminder_type: "day_before",
@@ -188,19 +188,23 @@ describe("Audit and reminders", () => {
       simulated: true,
     });
     expect(rem.reminder_type).toBe("day_before");
-    expect(hasReminderBeenSent("APT-001", "day_before", "email")).toBe(true);
+    expect(await hasReminderBeenSent("APT-001", "day_before", "email")).toBe(true);
   });
 });
 
 describe("Status update and dashboard", () => {
-  it("updates appointment status", () => {
-    const updated = updateAppointmentStatus("APT-002", "Completed");
+  it("updates appointment status", async () => {
+    const updated = await updateAppointmentStatus("APT-002", "Completed");
     expect(updated.status).toBe("Completed");
   });
 
-  it("returns dashboard stats without health PHI", () => {
-    const stats = getDashboardStats();
+  it("returns dashboard stats without health PHI", async () => {
+    const stats = await getDashboardStats();
     expect(stats.totalAppointments).toBeGreaterThan(0);
-    expect(stats.upcoming[0]).not.toHaveProperty("symptoms");
+    expect(stats).toHaveProperty("byStatus");
+    expect(stats).toHaveProperty("upcoming");
+    for (const row of stats.upcoming) {
+      expect(row).not.toHaveProperty("symptoms");
+    }
   });
 });

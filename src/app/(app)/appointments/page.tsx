@@ -20,19 +20,28 @@ export default async function AppointmentsPage({
   const profile = await getSessionProfile();
   if (!profile) redirect("/onboarding");
 
-  const filters = await searchParams;
+  const params = await searchParams;
+  const filters: Parameters<typeof listAppointments>[0] = {
+    q: params.q,
+    status: params.status,
+    department: params.department,
+    date: params.date,
+  };
+
   if (profile.role === "Patient") filters.patientEmail = profile.email;
   else if (profile.role === "Doctor" && profile.department)
     filters.department = profile.department;
 
-  const appointments = listAppointments(filters);
-  const patientMap = new Map(listPatients().map((p) => [p.patient_id, p.full_name]));
+  const appointments = await listAppointments(filters);
+  const patientMap = new Map(
+    (await listPatients()).map((p) => [p.patient_id, p.full_name])
+  );
 
   return (
     <div>
       <PageHeader
         title="Appointments"
-        subtitle="No health PHI in this list — open a row for details"
+        subtitle="View and manage clinic appointments"
         action={
           <Link href="/appointments/new" className="btn-primary">
             + Book
@@ -45,7 +54,7 @@ export default async function AppointmentsPage({
       </Suspense>
 
       <p className="text-sm text-slate-500">
-        List shows booking metadata only. Open an appointment to view health intake.
+        Select an appointment to view full details and health intake.
       </p>
 
       <div className="card overflow-x-auto">

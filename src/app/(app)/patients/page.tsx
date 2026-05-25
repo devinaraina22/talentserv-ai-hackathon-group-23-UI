@@ -9,13 +9,13 @@ export default async function PatientsPage() {
   if (!profile) redirect("/onboarding");
   if (profile.role === "Patient") redirect("/appointments");
 
-  const patients = listPatients();
+  const patients = await listPatients();
 
   return (
     <div>
       <PageHeader
         title="Patients"
-        subtitle="Synthetic demo records only"
+        subtitle="Manage patient records at MediBook Clinic"
         action={
           <Link href="/patients/new" className="btn-primary">
             + Register Patient
@@ -39,7 +39,7 @@ export default async function PatientsPage() {
             {patients.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-4 text-slate-500">
-                  No patients registered. Add synthetic demo data via seed or register a patient.
+                  No patients registered yet. Register your first patient to get started.
                 </td>
               </tr>
             ) : (

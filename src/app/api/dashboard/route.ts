@@ -11,6 +11,6 @@ export async function GET() {
   }
 
   return NextResponse.json(
-    getDashboardStats(profile.role, profile.email, profile.department)
+    await getDashboardStats(profile.role, profile.email, profile.department)
   );
 }

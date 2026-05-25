@@ -3,8 +3,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { ROLE_BADGE_LIGHT } from "@/lib/auth";
 import type { UserRole } from "@/lib/types";
 
-export default function AuditPage() {
-  const logs = listAuditLogs(80);
+export default async function AuditPage() {
+  const logs = await listAuditLogs(80);
 
   return (
     <div>

@@ -3,20 +3,21 @@ import { hasPermission } from "@/lib/auth";
 import { createPatient, listPatients, logAudit } from "@/lib/db";
 import { patientSchema } from "@/lib/validation";
 import { requireProfile } from "@/lib/session";
+import { friendlyError } from "@/lib/user-messages";
 
 export async function GET() {
   let profile;
   try {
     profile = await requireProfile();
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
   }
 
   if (!hasPermission(profile.role, "patients:read")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "You do not have permission to view patients." }, { status: 403 });
   }
 
-  return NextResponse.json(listPatients());
+  return NextResponse.json(await listPatients());
 }
 
 export async function POST(request: NextRequest) {
@@ -24,25 +25,22 @@ export async function POST(request: NextRequest) {
   try {
     profile = await requireProfile();
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Please sign in to continue." }, { status: 401 });
   }
 
   if (!hasPermission(profile.role, "patients:write")) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ error: "You do not have permission to register patients." }, { status: 403 });
   }
 
   try {
     const body = await request.json();
     const parsed = patientSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Validation failed", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Please check the patient details and try again." }, { status: 400 });
     }
     const allowDuplicate = body.allow_duplicate === true;
-    const patient = createPatient(parsed.data, { allowDuplicate });
-    logAudit({
+    const patient = await createPatient(parsed.data, { allowDuplicate });
+    await logAudit({
       user_id: profile.clerk_user_id,
       user_email: profile.email,
       user_role: profile.role,
@@ -55,6 +53,6 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to create patient";
     const status = message.includes("Duplicate") ? 409 : 400;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: friendlyError(message) }, { status });
   }
 }

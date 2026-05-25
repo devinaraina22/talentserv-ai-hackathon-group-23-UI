@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { AlertBanner } from "@/components/AlertBanner";
 import { useRole } from "@/components/RoleProvider";
 import { canSendReminders } from "@/lib/auth";
+import { UI } from "@/lib/user-messages";
 import type { ReminderLog } from "@/lib/types";
 import { CalendarClock, Mail, MessageSquare, Send } from "lucide-react";
 import Link from "next/link";
 
 const TYPE_LABELS: Record<string, string> = {
   booking_confirmation: "Booking confirmation",
-  day_before: "1 day before (friendly)",
+  day_before: "Appointment reminder",
   manual: "Manual reminder",
 };
 
@@ -19,7 +21,9 @@ export default function RemindersPage() {
   const [reminders, setReminders] = useState<ReminderLog[]>([]);
   const [appointmentId, setAppointmentId] = useState("APT-001");
   const [sending, setSending] = useState<"email" | "sms" | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(
+    null
+  );
   const [cronResult, setCronResult] = useState<string | null>(null);
 
   const allowed = profile ? canSendReminders(profile.role) : false;
@@ -44,28 +48,33 @@ export default function RemindersPage() {
     const data = await res.json();
     setSending(null);
     if (res.ok) {
-      setFeedback(
-        data.simulated
-          ? `Logged (configure SMTP for real email). Type: ${data.reminder_type}`
-          : `Real email sent to ${data.recipient}`
-      );
+      setFeedback({
+        type: "success",
+        message: channel === "email" ? UI.reminderEmailSent : UI.reminderSmsSent,
+      });
       load();
     } else {
-      setFeedback(data.error ?? "Failed");
+      setFeedback({
+        type: "error",
+        message: data.error ?? "We could not send the reminder. Please try again.",
+      });
     }
   }
 
   async function runDueReminders() {
-    setCronResult("Running day-before job...");
+    setCronResult(null);
     const res = await fetch("/api/cron/reminders", { method: "POST" });
     const data = await res.json();
     if (res.ok) {
+      const sent = data.sent ?? 0;
       setCronResult(
-        `Sent ${data.sent} friendly reminder(s), skipped ${data.skipped}. Email configured: ${data.emailConfigured}`
+        sent === 0
+          ? "No reminders were due today."
+          : `${sent} reminder${sent === 1 ? "" : "s"} sent successfully.`
       );
       load();
     } else {
-      setCronResult(data.error ?? "Cron failed — set CRON_SECRET or use: npm run reminders:due");
+      setCronResult("Unable to run reminders right now. Please try again later.");
     }
   }
 
@@ -86,27 +95,25 @@ export default function RemindersPage() {
   return (
     <div>
       <PageHeader
-        title="Patient Emails & Reminders"
-        subtitle="Real SMTP emails on booking + friendly reminder 1 day before"
+        title="Patient Reminders"
+        subtitle="Send confirmation and appointment reminder emails to patients"
       />
 
       <div className="card mb-6 border-cyan-200 bg-cyan-50/50">
         <h3 className="flex items-center gap-2 font-semibold text-cyan-900">
           <CalendarClock className="h-5 w-5" />
-          Automatic day-before reminders
+          Day-before reminders
         </h3>
         <p className="mt-2 text-sm text-cyan-800">
-          Patients with a <strong>Booked</strong> appointment tomorrow receive a friendly email
-          with their name, <strong>Patient ID</strong> (PAT-xxx) and <strong>Appointment ID</strong>{" "}
-          (APT-xxx).
+          Patients with a booked appointment tomorrow receive a friendly email with their
+          appointment details and reference numbers.
         </p>
         <button type="button" onClick={runDueReminders} className="btn-primary mt-4">
-          Run due reminders now
+          Send due reminders now
         </button>
-        <p className="mt-2 text-xs text-cyan-700">
-          Production: schedule daily → <code className="rounded bg-white px-1">npm run reminders:due</code> or POST /api/cron/reminders
-        </p>
-        {cronResult && <p className="mt-2 text-sm text-slate-700">{cronResult}</p>}
+        {cronResult && (
+          <p className="mt-3 text-sm text-slate-700">{cronResult}</p>
+        )}
       </div>
 
       <div className="card mb-8 space-y-4">
@@ -115,11 +122,12 @@ export default function RemindersPage() {
           Send manual reminder
         </h3>
         <div>
-          <label className="label">Appointment ID (APT-xxx)</label>
+          <label className="label">Appointment reference</label>
           <input
             className="input-field max-w-xs font-mono"
             value={appointmentId}
             onChange={(e) => setAppointmentId(e.target.value)}
+            placeholder="APT-001"
           />
         </div>
         <div className="flex flex-wrap gap-3">
@@ -139,38 +147,34 @@ export default function RemindersPage() {
             className="btn-secondary"
           >
             <MessageSquare className="h-4 w-4" />
-            SMS (simulated)
+            {sending === "sms" ? "Sending..." : "SMS patient"}
           </button>
         </div>
-        {feedback && (
-          <p className="rounded-lg bg-slate-100 p-3 text-sm text-slate-800">{feedback}</p>
-        )}
+        {feedback && <AlertBanner type={feedback.type} message={feedback.message} />}
       </div>
 
-      <h3 className="mb-4 font-semibold text-slate-900">Sent log</h3>
+      <h3 className="mb-4 font-semibold text-slate-900">Recent reminders</h3>
       <div className="space-y-3">
-        {reminders.map((r) => (
-          <div key={r.id} className="card flex gap-4 text-sm">
-            <div className="min-w-0 flex-1">
-              <p className="font-medium">
-                {TYPE_LABELS[r.reminder_type ?? "manual"]} · {r.appointment_id}
-                {r.simulated ? (
-                  <span className="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-                    dev/log
-                  </span>
-                ) : (
+        {reminders.length === 0 ? (
+          <p className="text-sm text-slate-500">No reminders sent yet.</p>
+        ) : (
+          reminders.map((r) => (
+            <div key={r.id} className="card flex gap-4 text-sm">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">
+                  {TYPE_LABELS[r.reminder_type ?? "manual"]} · {r.appointment_id}
                   <span className="ml-2 rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
                     sent
                   </span>
-                )}
-              </p>
-              <p className="text-slate-600">{r.message}</p>
-              <p className="text-xs text-slate-400">
-                {r.channel} → {r.recipient} · {new Date(r.sent_at).toLocaleString()}
-              </p>
+                </p>
+                <p className="text-slate-600">{r.message}</p>
+                <p className="text-xs text-slate-400">
+                  {r.channel} → {r.recipient} · {new Date(r.sent_at).toLocaleString()}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

@@ -15,5 +15,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "email or phone required" }, { status: 400 });
   }
 
-  return NextResponse.json(checkDuplicatePatient(email, phone, exclude));
+  return NextResponse.json(await checkDuplicatePatient(email, phone, exclude));
 }

@@ -13,7 +13,7 @@ export async function GET() {
   const session = await getSessionUser();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { getUserProfile } = await import("@/lib/db");
-  const profile = getUserProfile(session.userId);
+  const profile = await getUserProfile(session.userId);
   return NextResponse.json({ profile: profile ?? null });
 }
 
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid role" }, { status: 400 });
   }
 
-  const profile = upsertUserProfile({
+  const profile = await upsertUserProfile({
     clerk_user_id: session.userId,
     email: session.email,
     name: session.name,
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     department: parsed.data.department,
   });
 
-  logAudit({
+  await logAudit({
     user_id: session.userId,
     user_email: session.email,
     user_role: profile.role,

@@ -233,10 +233,16 @@ PatientBookingAI/
 
 ## Deployment (Vercel)
 
-1. Push to GitHub
-2. Import in [Vercel](https://vercel.com)
-3. Add Clerk + SMTP env vars
-4. Note: file-based `store.json` resets on serverless cold starts — use external DB for production
+1. Push to GitHub and import the repo in [Vercel](https://vercel.com).
+2. Add **Upstash Redis** via Vercel → Storage → Create → Upstash Redis. Vercel sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` automatically.
+3. Add environment variables from `.env.example`:
+   - Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`)
+   - SMTP settings for confirmation and reminder emails
+   - `CRON_SECRET` for the daily reminder job (Vercel Cron calls `/api/cron/reminders` at 9:00 UTC)
+4. Deploy. On first request, the app seeds Upstash from `data/seed.json` if the store is empty.
+5. In Clerk dashboard, add your Vercel production URL to allowed origins and redirect URLs.
+
+Local development uses `data/store.json` when Redis env vars are not set.
 
 ---
 

@@ -21,11 +21,11 @@ export async function GET(
   }
 
   const { id } = await params;
-  const appointment = getAppointment(id);
+  const appointment = await getAppointment(id);
   if (!appointment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const patient = getPatient(appointment.patient_id);
-  const health = getHealthIntake(appointment.patient_id);
+  const patient = await getPatient(appointment.patient_id);
+  const health = await getHealthIntake(appointment.patient_id);
   return NextResponse.json({ appointment, patient, health: health ?? null });
 }
 
@@ -51,8 +51,8 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
-    const appointment = updateAppointmentStatus(id, parsed.data);
-    logAudit({
+    const appointment = await updateAppointmentStatus(id, parsed.data);
+    await logAudit({
       user_id: profile.clerk_user_id,
       user_email: profile.email,
       user_role: profile.role,

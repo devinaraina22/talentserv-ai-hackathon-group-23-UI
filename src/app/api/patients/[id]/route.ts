@@ -11,10 +11,10 @@ export async function GET(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const patient = getPatient(id);
+  const patient = await getPatient(id);
   if (!patient) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const health = getHealthIntake(id);
+  const health = await getHealthIntake(id);
   return NextResponse.json({ patient, health: health ?? null });
 }
 
@@ -36,7 +36,7 @@ export async function PUT(
       );
     }
     const { patient_id: _pid, ...rest } = parsed.data;
-    const patient = updatePatient(id, rest);
+    const patient = await updatePatient(id, rest);
     return NextResponse.json(patient);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Failed to update patient";

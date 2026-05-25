@@ -1,8 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { DISCLAIMER } from "@/lib/constants";
-import { Activity, ArrowRight, Shield } from "lucide-react";
+import { CLINIC, DISCLAIMER } from "@/lib/constants";
+import { UI } from "@/lib/user-messages";
+import { Activity, ArrowRight, Calendar, Shield } from "lucide-react";
 
 export default async function HomePage() {
   const { userId } = await auth();
@@ -16,14 +17,15 @@ export default async function HomePage() {
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-20">
         <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-cyan-300">
           <Shield className="h-4 w-4" />
-          Healthcare Hackathon MVP
+          {CLINIC.name}
         </div>
         <h1 className="font-display max-w-2xl text-5xl leading-tight md:text-6xl">
-          Clinic booking that feels modern, not medical-grade dull
+          {UI.landingTagline}
         </h1>
         <p className="mt-6 max-w-xl text-lg text-slate-400">
-          Register patients, capture intake, manage doctor availability, send mock
-          reminders, and print receipts — with role-based access for your whole clinic.
+          Register patients, complete health intake, book appointments with real-time
+          availability, and receive email confirmations — all in one secure workspace
+          for your clinic team.
         </p>
         <p className="mt-4 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-100">
           {DISCLAIMER}
@@ -45,8 +47,8 @@ export default async function HomePage() {
         <div className="mt-16 grid gap-4 sm:grid-cols-3">
           {[
             { icon: Activity, label: "Live dashboard" },
+            { icon: Calendar, label: "Online booking" },
             { icon: Shield, label: "Role-based access" },
-            { icon: ArrowRight, label: "Audit trail" },
           ].map(({ icon: Icon, label }) => (
             <div
               key={label}

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Mail, MessageSquare } from "lucide-react";
+import { UI } from "@/lib/user-messages";
+import { AlertBanner } from "@/components/AlertBanner";
 
 export function RemindButtons({
   appointmentId,
   patientName,
   patientId,
   patientEmail,
-  patientPhone,
   appointmentDate,
   appointmentTime,
 }: {
@@ -37,17 +38,11 @@ export function RemindButtons({
     setLoading(null);
 
     if (!res.ok) {
-      setError(data.error ?? "Failed to send reminder");
+      setError(data.error ?? "We could not send the reminder. Please try again.");
       return;
     }
-    const mode = data.simulated
-      ? "(logged to console — configure SMTP in .env.local)"
-      : "(email delivered)";
-    setMsg(
-      channel === "email"
-        ? `Email sent to ${patientName} <${data.recipient}> ${mode}`
-        : `SMS simulation logged for ${patientPhone}`
-    );
+
+    setMsg(channel === "email" ? UI.reminderEmailSent : UI.reminderSmsSent);
   }
 
   return (
@@ -55,8 +50,8 @@ export function RemindButtons({
       <div>
         <h3 className="font-semibold text-slate-900">Send patient reminder</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Email includes <strong>Patient ID {patientId}</strong> and{" "}
-          <strong>Appointment ID {appointmentId}</strong> (separate IDs).
+          Notify {patientName} about appointment {appointmentId} on {appointmentDate}{" "}
+          at {appointmentTime}.
         </p>
       </div>
 
@@ -94,16 +89,12 @@ export function RemindButtons({
           className="btn-secondary"
         >
           <MessageSquare className="h-4 w-4" />
-          {loading === "sms" ? "Sending..." : "Send SMS (simulated)"}
+          {loading === "sms" ? "Sending..." : "Send SMS Reminder"}
         </button>
       </div>
 
-      {msg && (
-        <p className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">{msg}</p>
-      )}
-      {error && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
-      )}
+      {msg && <AlertBanner type="success" message={msg} />}
+      {error && <AlertBanner type="error" message={error} />}
     </div>
   );
 }

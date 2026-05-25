@@ -22,10 +22,10 @@ export async function GET(request: NextRequest) {
 
   if (department && date) {
     return NextResponse.json({
-      slots: getAvailabilityForDay(department, date),
+      slots: await getAvailabilityForDay(department, date),
     });
   }
-  return NextResponse.json(listAvailability(department));
+  return NextResponse.json(await listAvailability(department));
 }
 
 const createSchema = z.object({
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Validation failed" }, { status: 400 });
   }
 
-  const record = createAvailability(parsed.data);
-  logAudit({
+  const record = await createAvailability(parsed.data);
+  await logAudit({
     user_id: profile.clerk_user_id,
     user_email: profile.email,
     user_role: profile.role,

@@ -19,11 +19,11 @@ export default async function AppointmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const appointment = getAppointment(id);
+  const appointment = await getAppointment(id);
   if (!appointment) notFound();
 
-  const patient = getPatient(appointment.patient_id);
-  const health = getHealthIntake(appointment.patient_id);
+  const patient = await getPatient(appointment.patient_id);
+  const health = await getHealthIntake(appointment.patient_id);
   const profile = await getSessionProfile();
   const showReminders = profile ? canSendReminders(profile.role) : false;
 

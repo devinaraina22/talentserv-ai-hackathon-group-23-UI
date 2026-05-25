@@ -9,10 +9,10 @@ export default async function PatientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const patient = getPatient(id);
+  const patient = await getPatient(id);
   if (!patient) notFound();
 
-  const health = getHealthIntake(id);
+  const health = await getHealthIntake(id);
 
   return (
     <div className="space-y-6">

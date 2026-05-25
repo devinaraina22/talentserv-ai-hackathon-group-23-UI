@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import type {
   Appointment,
   AppointmentStatus,
@@ -16,57 +14,23 @@ import type {
   UserProfile,
   UserRole,
 } from "./types";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const STORE_PATH = path.join(DATA_DIR, "store.json");
-const SEED_PATH = path.join(DATA_DIR, "seed.json");
-
 import { DAY_NAMES } from "./constants";
+import { loadStore, saveStore, resetStore, migrateStore } from "./storage";
 
-function migrate(raw: Partial<DataStore>): DataStore {
-  return {
-    patients: raw.patients ?? [],
-    health_intakes: raw.health_intakes ?? [],
-    appointments: raw.appointments ?? [],
-    availability: raw.availability ?? [],
-    user_profiles: raw.user_profiles ?? [],
-    audit_logs: raw.audit_logs ?? [],
-    reminders: raw.reminders ?? [],
-  };
+export { resetStore, migrateStore };
+
+async function readStore(): Promise<DataStore> {
+  return loadStore();
 }
 
-function ensureStore(): DataStore {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(STORE_PATH)) {
-    const seed = fs.existsSync(SEED_PATH)
-      ? migrate(JSON.parse(fs.readFileSync(SEED_PATH, "utf-8")) as Partial<DataStore>)
-      : migrate({});
-    fs.writeFileSync(STORE_PATH, JSON.stringify(seed, null, 2));
-  }
-  const store = migrate(JSON.parse(fs.readFileSync(STORE_PATH, "utf-8")) as Partial<DataStore>);
-  return store;
+async function writeStore(store: DataStore): Promise<void> {
+  await saveStore(store);
 }
 
-function writeStore(store: DataStore): void {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
-}
-
-export function readStore(): DataStore {
-  return ensureStore();
-}
-
-export function resetStore(seed?: DataStore): void {
-  if (seed) writeStore(seed);
-  else if (fs.existsSync(SEED_PATH))
-    writeStore(migrate(JSON.parse(fs.readFileSync(SEED_PATH, "utf-8")) as Partial<DataStore>));
-  else writeStore(migrate({}));
-}
-
-// --- Audit ---
-
-export function logAudit(entry: Omit<AuditLogEntry, "id" | "timestamp">): AuditLogEntry {
-  const store = readStore();
+export async function logAudit(
+  entry: Omit<AuditLogEntry, "id" | "timestamp">
+): Promise<AuditLogEntry> {
+  const store = await readStore();
   const record: AuditLogEntry = {
     ...entry,
     id: `AUD-${String(store.audit_logs.length + 1).padStart(4, "0")}`,
@@ -74,37 +38,35 @@ export function logAudit(entry: Omit<AuditLogEntry, "id" | "timestamp">): AuditL
   };
   store.audit_logs.unshift(record);
   if (store.audit_logs.length > 500) store.audit_logs = store.audit_logs.slice(0, 500);
-  writeStore(store);
+  await writeStore(store);
   return record;
 }
 
-export function listAuditLogs(limit = 100): AuditLogEntry[] {
-  return readStore().audit_logs.slice(0, limit);
+export async function listAuditLogs(limit = 100): Promise<AuditLogEntry[]> {
+  const store = await readStore();
+  return store.audit_logs.slice(0, limit);
 }
 
-// --- User profiles / roles ---
-
-export function getUserProfile(clerkUserId: string): UserProfile | undefined {
-  return readStore().user_profiles.find((u) => u.clerk_user_id === clerkUserId);
+export async function getUserProfile(clerkUserId: string): Promise<UserProfile | undefined> {
+  const store = await readStore();
+  return store.user_profiles.find((u) => u.clerk_user_id === clerkUserId);
 }
 
-export function upsertUserProfile(profile: UserProfile): UserProfile {
-  const store = readStore();
+export async function upsertUserProfile(profile: UserProfile): Promise<UserProfile> {
+  const store = await readStore();
   const idx = store.user_profiles.findIndex((u) => u.clerk_user_id === profile.clerk_user_id);
   if (idx === -1) store.user_profiles.push(profile);
   else store.user_profiles[idx] = profile;
-  writeStore(store);
+  await writeStore(store);
   return profile;
 }
 
-// --- Duplicate patient detection ---
-
-export function checkDuplicatePatient(
+export async function checkDuplicatePatient(
   email: string,
   phone: string,
   excludePatientId?: string
-): DuplicatePatientWarning {
-  const store = readStore();
+): Promise<DuplicatePatientWarning> {
+  const store = await readStore();
   const matches = store.patients.filter(
     (p) =>
       p.patient_id !== excludePatientId &&
@@ -121,102 +83,98 @@ export function checkDuplicatePatient(
   };
 }
 
-// --- Availability ---
-
-export function listAvailability(department?: string): DoctorAvailability[] {
-  let list = readStore().availability;
+export async function listAvailability(department?: string): Promise<DoctorAvailability[]> {
+  const store = await readStore();
+  let list = store.availability;
   if (department) list = list.filter((a) => a.doctor_or_department === department);
   return list;
 }
 
-export function getAvailabilityForDay(
+export async function getAvailabilityForDay(
   department: string,
   dateStr: string
-): string[] {
+): Promise<string[]> {
+  const store = await readStore();
   const day = new Date(dateStr + "T12:00:00").getDay();
-  const slots = readStore()
-    .availability.filter(
-      (a) => a.doctor_or_department === department && a.day_of_week === day
-    )
+  const slots = store.availability
+    .filter((a) => a.doctor_or_department === department && a.day_of_week === day)
     .flatMap((a) => a.time_slots);
   return [...new Set(slots)].sort();
 }
 
-export function isSlotInAvailability(
+export async function isSlotInAvailability(
   department: string,
   dateStr: string,
   time: string
-): boolean {
-  const available = getAvailabilityForDay(department, dateStr);
+): Promise<boolean> {
+  const available = await getAvailabilityForDay(department, dateStr);
   if (available.length === 0) return true;
   return available.includes(time);
 }
 
-export function createAvailability(
+export async function createAvailability(
   data: Omit<DoctorAvailability, "id">
-): DoctorAvailability {
-  const store = readStore();
+): Promise<DoctorAvailability> {
+  const store = await readStore();
   const record: DoctorAvailability = {
     ...data,
     id: `AVL-${String(store.availability.length + 1).padStart(3, "0")}`,
   };
   store.availability.push(record);
-  writeStore(store);
+  await writeStore(store);
   return record;
 }
 
-export function deleteAvailability(id: string): void {
-  const store = readStore();
+export async function deleteAvailability(id: string): Promise<void> {
+  const store = await readStore();
   store.availability = store.availability.filter((a) => a.id !== id);
-  writeStore(store);
+  await writeStore(store);
 }
 
-// --- Patients ---
-
-export function listPatients(): Patient[] {
-  return readStore().patients;
+export async function listPatients(): Promise<Patient[]> {
+  return (await readStore()).patients;
 }
 
-export function getPatient(patientId: string): Patient | undefined {
-  return readStore().patients.find((p) => p.patient_id === patientId);
+export async function getPatient(patientId: string): Promise<Patient | undefined> {
+  return (await readStore()).patients.find((p) => p.patient_id === patientId);
 }
 
-export function getPatientByEmail(email: string): Patient | undefined {
-  return readStore().patients.find(
+export async function getPatientByEmail(email: string): Promise<Patient | undefined> {
+  return (await readStore()).patients.find(
     (p) => p.email.toLowerCase() === email.toLowerCase()
   );
 }
 
-export function createPatient(
+export async function createPatient(
   data: Omit<Patient, "created_at" | "updated_at">,
   options?: { allowDuplicate?: boolean }
-): Patient {
-  const dup = checkDuplicatePatient(data.email, data.phone_number);
+): Promise<Patient> {
+  const dup = await checkDuplicatePatient(data.email, data.phone_number);
   if (dup.duplicate && !options?.allowDuplicate) {
     throw new Error(
       `Duplicate patient detected: ${dup.matches.map((m) => m.full_name).join(", ")}`
     );
   }
-  const store = readStore();
+  const store = await readStore();
   if (store.patients.some((p) => p.patient_id === data.patient_id)) {
     throw new Error("Patient ID already exists");
   }
   const now = new Date().toISOString();
   const patient: Patient = { ...data, created_at: now, updated_at: now };
   store.patients.push(patient);
-  writeStore(store);
+  await writeStore(store);
   return patient;
 }
 
-export function updatePatient(
+export async function updatePatient(
   patientId: string,
   data: Partial<Omit<Patient, "patient_id" | "created_at">>
-): Patient {
-  const store = readStore();
+): Promise<Patient> {
+  const store = await readStore();
   const index = store.patients.findIndex((p) => p.patient_id === patientId);
   if (index === -1) throw new Error("Patient not found");
   if (data.email || data.phone_number) {
-    const dup = checkDuplicatePatient(
+    const dup = await checkDuplicatePatient(
       data.email ?? store.patients[index].email,
       data.phone_number ?? store.patients[index].phone_number,
       patientId
@@ -231,20 +189,18 @@ export function updatePatient(
     updated_at: new Date().toISOString(),
   };
   store.patients[index] = updated;
-  writeStore(store);
+  await writeStore(store);
   return updated;
 }
 
-// --- Health intake ---
-
-export function getHealthIntake(patientId: string): HealthIntake | undefined {
-  return readStore().health_intakes.find((h) => h.patient_id === patientId);
+export async function getHealthIntake(patientId: string): Promise<HealthIntake | undefined> {
+  return (await readStore()).health_intakes.find((h) => h.patient_id === patientId);
 }
 
-export function upsertHealthIntake(
+export async function upsertHealthIntake(
   data: Omit<HealthIntake, "updated_at">
-): HealthIntake {
-  const store = readStore();
+): Promise<HealthIntake> {
+  const store = await readStore();
   if (!store.patients.some((p) => p.patient_id === data.patient_id)) {
     throw new Error("Patient not found");
   }
@@ -252,13 +208,11 @@ export function upsertHealthIntake(
   const record: HealthIntake = { ...data, updated_at: new Date().toISOString() };
   if (index === -1) store.health_intakes.push(record);
   else store.health_intakes[index] = record;
-  writeStore(store);
+  await writeStore(store);
   return record;
 }
 
-// --- Appointments ---
-
-export function listAppointments(filters?: {
+export async function listAppointments(filters?: {
   q?: string;
   status?: string;
   department?: string;
@@ -266,17 +220,18 @@ export function listAppointments(filters?: {
   patientId?: string;
   patientEmail?: string;
   doctorDepartment?: string;
-}): Appointment[] {
-  const store = readStore();
+}): Promise<Appointment[]> {
+  const store = await readStore();
   let results = [...store.appointments];
 
   if (filters?.patientId) {
     results = results.filter((a) => a.patient_id === filters.patientId);
   }
   if (filters?.patientEmail) {
-    const patient = getPatientByEmail(filters.patientEmail);
-    if (patient) results = results.filter((a) => a.patient_id === patient.patient_id);
-    else results = [];
+    const patient = await getPatientByEmail(filters.patientEmail);
+    results = patient
+      ? results.filter((a) => a.patient_id === patient.patient_id)
+      : [];
   }
   if (filters?.doctorDepartment) {
     results = results.filter(
@@ -308,17 +263,17 @@ export function listAppointments(filters?: {
   );
 }
 
-export function getAppointment(appointmentId: string): Appointment | undefined {
-  return readStore().appointments.find((a) => a.appointment_id === appointmentId);
+export async function getAppointment(appointmentId: string): Promise<Appointment | undefined> {
+  return (await readStore()).appointments.find((a) => a.appointment_id === appointmentId);
 }
 
-export function isSlotTaken(
+export async function isSlotTaken(
   doctorOrDepartment: string,
   appointmentDate: string,
   appointmentTime: string,
   excludeAppointmentId?: string
-): boolean {
-  return readStore().appointments.some(
+): Promise<boolean> {
+  return (await readStore()).appointments.some(
     (a) =>
       a.doctor_or_department === doctorOrDepartment &&
       a.appointment_date === appointmentDate &&
@@ -328,37 +283,37 @@ export function isSlotTaken(
   );
 }
 
-export function generateAppointmentId(): string {
-  const store = readStore();
+async function generateAppointmentId(): Promise<string> {
+  const store = await readStore();
   const nums = store.appointments
     .map((a) => parseInt(a.appointment_id.replace(/^APT-/i, ""), 10))
     .filter((n) => !Number.isNaN(n));
   return `APT-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0")}`;
 }
 
-export function createAppointment(
+export async function createAppointment(
   data: Omit<Appointment, "appointment_id" | "status" | "created_at" | "updated_at"> & {
     appointment_id?: string;
   }
-): Appointment {
-  if (!isSlotInAvailability(data.doctor_or_department, data.appointment_date, data.appointment_time)) {
+): Promise<Appointment> {
+  if (!(await isSlotInAvailability(data.doctor_or_department, data.appointment_date, data.appointment_time))) {
     const day = DAY_NAMES[new Date(data.appointment_date + "T12:00:00").getDay()];
     throw new Error(
       `Selected time is not available for ${data.doctor_or_department} on ${day}`
     );
   }
-  if (isSlotTaken(data.doctor_or_department, data.appointment_date, data.appointment_time)) {
+  if (await isSlotTaken(data.doctor_or_department, data.appointment_date, data.appointment_time)) {
     throw new Error(
       "This time slot is already booked for the selected doctor or department"
     );
   }
-  const store = readStore();
+  const store = await readStore();
   if (!store.patients.some((p) => p.patient_id === data.patient_id)) {
     throw new Error("Patient not found");
   }
   const now = new Date().toISOString();
   const appointment: Appointment = {
-    appointment_id: data.appointment_id ?? generateAppointmentId(),
+    appointment_id: data.appointment_id ?? (await generateAppointmentId()),
     patient_id: data.patient_id,
     doctor_or_department: data.doctor_or_department,
     appointment_date: data.appointment_date,
@@ -370,15 +325,15 @@ export function createAppointment(
     updated_at: now,
   };
   store.appointments.push(appointment);
-  writeStore(store);
+  await writeStore(store);
   return appointment;
 }
 
-export function updateAppointmentStatus(
+export async function updateAppointmentStatus(
   appointmentId: string,
   status: AppointmentStatus
-): Appointment {
-  const store = readStore();
+): Promise<Appointment> {
+  const store = await readStore();
   const index = store.appointments.findIndex((a) => a.appointment_id === appointmentId);
   if (index === -1) throw new Error("Appointment not found");
   store.appointments[index] = {
@@ -386,18 +341,16 @@ export function updateAppointmentStatus(
     status,
     updated_at: new Date().toISOString(),
   };
-  writeStore(store);
+  await writeStore(store);
   return store.appointments[index];
 }
 
-// --- Reminders ---
-
-export function hasReminderBeenSent(
+export async function hasReminderBeenSent(
   appointmentId: string,
   reminderType: ReminderType,
   channel: ReminderChannel = "email"
-): boolean {
-  return readStore().reminders.some(
+): Promise<boolean> {
+  return (await readStore()).reminders.some(
     (r) =>
       r.appointment_id === appointmentId &&
       (r.reminder_type ?? "manual") === reminderType &&
@@ -405,34 +358,38 @@ export function hasReminderBeenSent(
   );
 }
 
-export function logReminder(
+export async function logReminder(
   data: Omit<ReminderLog, "id" | "sent_at">
-): ReminderLog {
-  const store = readStore();
+): Promise<ReminderLog> {
+  const store = await readStore();
   const log: ReminderLog = {
     ...data,
     id: `REM-${String(store.reminders.length + 1).padStart(4, "0")}`,
     sent_at: new Date().toISOString(),
   };
   store.reminders.unshift(log);
-  writeStore(store);
+  await writeStore(store);
   return log;
 }
 
-export function listReminders(limit = 50): ReminderLog[] {
-  return readStore().reminders.slice(0, limit);
+export async function listReminders(limit = 50): Promise<ReminderLog[]> {
+  return (await readStore()).reminders.slice(0, limit);
 }
 
-// --- Dashboard ---
-
-export function getDashboardStats(role?: UserRole, userEmail?: string, department?: string): DashboardStats {
-  const store = readStore();
+export async function getDashboardStats(
+  role?: UserRole,
+  userEmail?: string,
+  department?: string
+): Promise<DashboardStats> {
+  const store = await readStore();
   const today = new Date().toISOString().slice(0, 10);
   const patientMap = new Map(store.patients.map((p) => [p.patient_id, p.full_name]));
 
   let appointments = store.appointments;
   if (role === "Patient" && userEmail) {
-    const p = getPatientByEmail(userEmail);
+    const p = store.patients.find(
+      (x) => x.email.toLowerCase() === userEmail.toLowerCase()
+    );
     appointments = p ? appointments.filter((a) => a.patient_id === p.patient_id) : [];
   } else if (role === "Doctor" && department) {
     appointments = appointments.filter((a) => a.doctor_or_department === department);
@@ -475,3 +432,4 @@ export function getDashboardStats(role?: UserRole, userEmail?: string, departmen
   };
 }
 
+export { DAY_NAMES };

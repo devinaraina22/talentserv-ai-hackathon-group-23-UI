@@ -14,9 +14,9 @@ export default async function NewAppointmentPage({
   const profile = await getSessionProfile();
   if (!profile) redirect("/onboarding");
 
-  let patients = listPatients();
+  let patients = await listPatients();
   if (profile.role === "Patient") {
-    const linked = getPatientByEmail(profile.email);
+    const linked = await getPatientByEmail(profile.email);
     patients = linked ? [linked] : [];
   }
 
@@ -24,7 +24,7 @@ export default async function NewAppointmentPage({
     <div>
       <PageHeader
         title="Book Appointment"
-        subtitle="Slots load from doctor availability — duplicates blocked"
+        subtitle="Choose an available time slot for your visit"
       />
       <AppointmentForm patients={patients} defaultPatientId={patient} />
       <Link href="/appointments" className="mt-4 inline-block text-sm text-cyan-600 hover:underline">

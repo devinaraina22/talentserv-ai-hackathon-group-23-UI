@@ -11,7 +11,7 @@ import { Plus, Trash2 } from "lucide-react";
 export default function AvailabilityPage() {
   const { profile } = useRole();
   const [list, setList] = useState<DoctorAvailability[]>([]);
-  const [dept, setDept] = useState(DEPARTMENTS[0]);
+  const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
   const [day, setDay] = useState(1);
   const [slots, setSlots] = useState<string[]>([TIME_SLOTS[0], TIME_SLOTS[2]]);
   const canManage = profile?.role === "Admin" || profile?.role === "Doctor";

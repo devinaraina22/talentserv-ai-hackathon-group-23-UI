@@ -34,7 +34,7 @@ function footerWithLogo(): string {
     <div style="margin-top:0;padding:28px 20px;background:#ecfdf5;border-top:2px solid ${brand.primary};text-align:center;border-radius:0 0 16px 16px">
       ${logoBlock}
       <p style="margin:0;font-size:13px;color:#475569">${CLINIC.tagline}</p>
-      <p style="margin:10px 0 0;font-size:11px;color:#64748b">Synthetic demo · Not medical advice</p>
+      <p style="margin:10px 0 0;font-size:11px;color:#64748b">${CLINIC.name} · Not medical advice</p>
     </div>`;
 }
 
