@@ -35,7 +35,8 @@ export async function PUT(
         { status: 400 }
       );
     }
-    const { patient_id: _pid, ...rest } = parsed.data;
+    const { patient_id, ...rest } = parsed.data;
+    void patient_id;
     const patient = await updatePatient(id, rest);
     return NextResponse.json(patient);
   } catch (e) {
