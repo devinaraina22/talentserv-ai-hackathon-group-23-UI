@@ -3,6 +3,8 @@ import { AppShell } from "@/components/AppShell";
 import { RoleProvider } from "@/components/RoleProvider";
 import { getSessionProfile } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const profile = await getSessionProfile();
   if (!profile) redirect("/onboarding");
