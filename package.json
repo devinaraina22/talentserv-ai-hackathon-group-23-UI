@@ -1,0 +1,43 @@
+{
+  "name": "patient-booking-ai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx scripts/check-clerk-env.ts && next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "db:seed": "tsx scripts/seed.ts",
+    "reminders:due": "tsx scripts/send-due-reminders.ts",
+    "email:test": "tsx scripts/test-email.ts"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.12.0",
+    "lucide-react": "^0.484.0",
+    "next": "^15.2.4",
+    "nodemailer": "^6.10.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.0",
+    "@playwright/test": "^1.51.0",
+    "@types/node": "^22.13.10",
+    "@types/nodemailer": "^6.4.23",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.22.0",
+    "eslint-config-next": "^15.2.4",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  }
+}
