@@ -37,8 +37,12 @@ export function AppointmentForm({
       .then((d) => {
         const slots = d.slots ?? [];
         setTimeSlots(slots);
-        if (slots.length && !slots.includes(form.appointment_time)) {
-          setForm((f) => ({ ...f, appointment_time: slots[0] }));
+        if (slots.length) {
+          setForm((f) =>
+            slots.includes(f.appointment_time)
+              ? f
+              : { ...f, appointment_time: slots[0] }
+          );
         }
       });
   }, [form.doctor_or_department, form.appointment_date]);
