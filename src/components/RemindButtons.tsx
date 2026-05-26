@@ -1,6 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
+import { clientApiFetch } from "@/lib/api-client";
 import { Mail, MessageSquare } from "lucide-react";
 import { UI } from "@/lib/user-messages";
 import { AlertBanner } from "@/components/AlertBanner";
@@ -21,6 +23,7 @@ export function RemindButtons({
   appointmentDate: string;
   appointmentTime: string;
 }) {
+  const { getToken } = useAuth();
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"email" | "sms" | null>(null);
@@ -29,9 +32,8 @@ export function RemindButtons({
     setMsg(null);
     setError(null);
     setLoading(channel);
-    const res = await fetch(`/api/appointments/${appointmentId}/remind`, {
+    const res = await clientApiFetch(getToken, `/api/appointments/${appointmentId}/remind`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channel }),
     });
     const data = await res.json();

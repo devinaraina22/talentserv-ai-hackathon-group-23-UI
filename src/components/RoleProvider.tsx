@@ -1,6 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { createContext, useContext, useEffect, useState } from "react";
+import { clientApiFetch } from "@/lib/api-client";
 import type { UserProfile } from "@/lib/types";
 
 const RoleContext = createContext<{
@@ -10,11 +12,12 @@ const RoleContext = createContext<{
 }>({ profile: null, loading: true, refresh: () => {} });
 
 export function RoleProvider({ children }: { children: React.ReactNode }) {
+  const { getToken } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = () => {
-    fetch("/api/user/role")
+    clientApiFetch(getToken, "/api/user/role")
       .then((r) => r.json())
       .then((d) => setProfile(d.profile ?? null))
       .finally(() => setLoading(false));

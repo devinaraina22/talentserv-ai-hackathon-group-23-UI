@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { listPatients } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { PageHeader } from "@/components/PageHeader";
 import { getSessionProfile } from "@/lib/session";
+import type { Patient } from "@/lib/types";
 import { redirect } from "next/navigation";
 
 export default async function PatientsPage() {
@@ -9,7 +10,7 @@ export default async function PatientsPage() {
   if (!profile) redirect("/onboarding");
   if (profile.role === "Patient") redirect("/appointments");
 
-  const patients = await listPatients();
+  const patients = await serverApiJson<Patient[]>("/api/patients");
 
   return (
     <div>

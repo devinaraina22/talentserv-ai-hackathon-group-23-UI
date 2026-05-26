@@ -1,7 +1,9 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientApiFetch } from "@/lib/api-client";
 import { GENDERS } from "@/lib/constants";
 import { AlertTriangle } from "lucide-react";
 
@@ -23,6 +25,7 @@ export function PatientForm({
   mode: "create" | "edit";
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [form, setForm] = useState<PatientFormData>({
     patient_id: initial?.patient_id ?? "",
     full_name: initial?.full_name ?? "",
@@ -47,11 +50,11 @@ export function PatientForm({
       phone: form.phone_number,
     });
     if (mode === "edit") params.set("exclude", form.patient_id);
-    const res = await fetch(`/api/patients/check?${params}`);
+    const res = await clientApiFetch(getToken, `/api/patients/check?${params}`);
     const data = await res.json();
     setDupWarning(data);
     setForceDuplicate(false);
-  }, [form.email, form.phone_number, form.patient_id, mode]);
+  }, [form.email, form.phone_number, form.patient_id, mode, getToken]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,9 +65,8 @@ export function PatientForm({
       mode === "create" ? "/api/patients" : `/api/patients/${form.patient_id}`;
     const method = mode === "create" ? "POST" : "PUT";
 
-    const res = await fetch(url, {
+    const res = await clientApiFetch(getToken, url, {
       method,
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
         age: Number(form.age),

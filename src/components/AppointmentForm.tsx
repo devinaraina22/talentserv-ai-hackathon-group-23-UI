@@ -1,8 +1,10 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { clientApiFetch } from "@/lib/api-client";
 import { APPOINTMENT_TYPES, DEPARTMENTS } from "@/lib/constants";
 import { UI } from "@/lib/user-messages";
 import type { Patient } from "@/lib/types";
@@ -16,6 +18,7 @@ export function AppointmentForm({
   defaultPatientId?: string;
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [form, setForm] = useState({
     patient_id: defaultPatientId ?? (patients[0]?.patient_id ?? ""),
     doctor_or_department: DEPARTMENTS[0] as string,
@@ -30,7 +33,8 @@ export function AppointmentForm({
 
   useEffect(() => {
     if (!form.doctor_or_department || !form.appointment_date) return;
-    fetch(
+    clientApiFetch(
+      getToken,
       `/api/availability?department=${encodeURIComponent(form.doctor_or_department)}&date=${form.appointment_date}`
     )
       .then((r) => r.json())
@@ -45,16 +49,15 @@ export function AppointmentForm({
           );
         }
       });
-  }, [form.doctor_or_department, form.appointment_date]);
+  }, [form.doctor_or_department, form.appointment_date, getToken]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const res = await fetch("/api/appointments", {
+    const res = await clientApiFetch(getToken, "/api/appointments", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     const data = await res.json();

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPatient } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { PatientForm } from "@/components/PatientForm";
+import type { Patient } from "@/lib/types";
 
 export default async function EditPatientPage({
   params,
@@ -9,8 +10,11 @@ export default async function EditPatientPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const patient = await getPatient(id);
-  if (!patient) notFound();
+  const data = await serverApiJson<{ patient: Patient }>(`/api/patients/${id}`).catch(
+    () => null
+  );
+  if (!data?.patient) notFound();
+  const patient = data.patient;
 
   return (
     <div className="space-y-4">

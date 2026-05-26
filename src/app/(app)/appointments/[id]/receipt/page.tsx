@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getAppointment, getPatient } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { CLINIC, DISCLAIMER } from "@/lib/constants";
 import { PrintButton } from "@/components/PrintButton";
+import type { Appointment, Patient } from "@/lib/types";
 
 export default async function ReceiptPage({
   params,
@@ -11,9 +12,13 @@ export default async function ReceiptPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const appointment = await getAppointment(id);
-  if (!appointment) notFound();
-  const patient = await getPatient(appointment.patient_id);
+  const data = await serverApiJson<{
+    appointment: Appointment;
+    patient: Patient | null;
+  }>(`/api/appointments/${id}`).catch(() => null);
+  if (!data?.appointment) notFound();
+
+  const { appointment, patient } = data;
 
   return (
     <div>

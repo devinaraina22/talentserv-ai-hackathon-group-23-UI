@@ -1,7 +1,9 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientApiFetch } from "@/lib/api-client";
 import { DISCLAIMER } from "@/lib/constants";
 
 type HealthFormData = {
@@ -23,6 +25,7 @@ export function HealthIntakeForm({
   initial?: Partial<HealthFormData>;
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [form, setForm] = useState<HealthFormData>({
     patient_id: patientId,
     symptoms: initial?.symptoms ?? "",
@@ -41,9 +44,8 @@ export function HealthIntakeForm({
     setError(null);
     setLoading(true);
 
-    const res = await fetch("/api/health", {
+    const res = await clientApiFetch(getToken, "/api/health", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     const data = await res.json();

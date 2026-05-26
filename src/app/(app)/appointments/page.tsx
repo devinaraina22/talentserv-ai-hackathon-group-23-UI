@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { listAppointments, listPatients } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AppointmentSearch } from "@/components/AppointmentSearch";
 import { PageHeader } from "@/components/PageHeader";
 import { getSessionProfile } from "@/lib/session";
+import type { Appointment, Patient } from "@/lib/types";
 import { redirect } from "next/navigation";
 
 export default async function AppointmentsPage({
@@ -21,21 +22,18 @@ export default async function AppointmentsPage({
   if (!profile) redirect("/onboarding");
 
   const params = await searchParams;
-  const filters: Parameters<typeof listAppointments>[0] = {
-    q: params.q,
-    status: params.status,
-    department: params.department,
-    date: params.date,
-  };
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.status) query.set("status", params.status);
+  if (params.department) query.set("department", params.department);
+  if (params.date) query.set("date", params.date);
 
-  if (profile.role === "Patient") filters.patientEmail = profile.email;
-  else if (profile.role === "Doctor" && profile.department)
-    filters.department = profile.department;
-
-  const appointments = await listAppointments(filters);
-  const patientMap = new Map(
-    (await listPatients()).map((p) => [p.patient_id, p.full_name])
+  const qs = query.toString();
+  const appointments = await serverApiJson<Appointment[]>(
+    `/api/appointments${qs ? `?${qs}` : ""}`
   );
+  const patients = await serverApiJson<Patient[]>("/api/patients");
+  const patientMap = new Map(patients.map((p) => [p.patient_id, p.full_name]));
 
   return (
     <div>

@@ -1,7 +1,9 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientApiFetch } from "@/lib/api-client";
 import type { AppointmentStatus } from "@/lib/types";
 import { APPOINTMENT_STATUSES } from "@/lib/constants";
 
@@ -13,6 +15,7 @@ export function StatusUpdater({
   currentStatus: AppointmentStatus;
 }) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -20,9 +23,8 @@ export function StatusUpdater({
   async function handleUpdate() {
     setLoading(true);
     setMessage(null);
-    const res = await fetch(`/api/appointments/${appointmentId}`, {
+    const res = await clientApiFetch(getToken, `/api/appointments/${appointmentId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
     setLoading(false);

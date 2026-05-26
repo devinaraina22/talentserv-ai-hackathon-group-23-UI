@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getHealthIntake, getPatient } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { HealthIntakeForm } from "@/components/HealthIntakeForm";
+import type { HealthIntake, Patient } from "@/lib/types";
 
 export default async function PatientDetailPage({
   params,
@@ -9,10 +10,12 @@ export default async function PatientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const patient = await getPatient(id);
-  if (!patient) notFound();
+  const data = await serverApiJson<{ patient: Patient; health: HealthIntake | null }>(
+    `/api/patients/${id}`
+  ).catch(() => null);
+  if (!data?.patient) notFound();
 
-  const health = await getHealthIntake(id);
+  const { patient, health } = data;
 
   return (
     <div className="space-y-6">

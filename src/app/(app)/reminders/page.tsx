@@ -1,6 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { clientApiFetch } from "@/lib/api-client";
 import { PageHeader } from "@/components/PageHeader";
 import { AlertBanner } from "@/components/AlertBanner";
 import { useRole } from "@/components/RoleProvider";
@@ -18,6 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function RemindersPage() {
   const { profile } = useRole();
+  const { getToken } = useAuth();
   const [reminders, setReminders] = useState<ReminderLog[]>([]);
   const [appointmentId, setAppointmentId] = useState("APT-001");
   const [sending, setSending] = useState<"email" | "sms" | null>(null);
@@ -29,7 +32,7 @@ export default function RemindersPage() {
   const allowed = profile ? canSendReminders(profile.role) : false;
 
   const load = () =>
-    fetch("/api/reminders")
+    clientApiFetch(getToken, "/api/reminders")
       .then((r) => (r.ok ? r.json() : []))
       .then(setReminders);
 
@@ -40,9 +43,8 @@ export default function RemindersPage() {
   async function send(channel: "email" | "sms") {
     setSending(channel);
     setFeedback(null);
-    const res = await fetch(`/api/appointments/${appointmentId}/remind`, {
+    const res = await clientApiFetch(getToken, `/api/appointments/${appointmentId}/remind`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channel }),
     });
     const data = await res.json();
@@ -63,7 +65,7 @@ export default function RemindersPage() {
 
   async function runDueReminders() {
     setCronResult(null);
-    const res = await fetch("/api/cron/reminders", { method: "POST" });
+    const res = await clientApiFetch(getToken, "/api/cron/reminders", { method: "POST" });
     const data = await res.json();
     if (res.ok) {
       const sent = data.sent ?? 0;

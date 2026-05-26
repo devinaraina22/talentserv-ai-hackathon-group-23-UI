@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { listPatients, getPatientByEmail } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { getSessionProfile } from "@/lib/session";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { PageHeader } from "@/components/PageHeader";
+import type { Patient } from "@/lib/types";
 import { redirect } from "next/navigation";
 
 export default async function NewAppointmentPage({
@@ -14,10 +15,11 @@ export default async function NewAppointmentPage({
   const profile = await getSessionProfile();
   if (!profile) redirect("/onboarding");
 
-  let patients = await listPatients();
+  let patients = await serverApiJson<Patient[]>("/api/patients");
   if (profile.role === "Patient") {
-    const linked = await getPatientByEmail(profile.email);
-    patients = linked ? [linked] : [];
+    patients = patients.filter(
+      (p) => p.email.toLowerCase() === profile.email.toLowerCase()
+    );
   }
 
   return (

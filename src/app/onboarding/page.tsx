@@ -1,7 +1,9 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { clientApiFetch } from "@/lib/api-client";
 import { ROLES } from "@/lib/auth";
 import { DEPARTMENTS } from "@/lib/constants";
 import { UI } from "@/lib/user-messages";
@@ -17,15 +19,15 @@ const roleDescriptions: Record<UserRole, string> = {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [role, setRole] = useState<UserRole>("Receptionist");
   const [department, setDepartment] = useState<string>(DEPARTMENTS[0]);
   const [loading, setLoading] = useState(false);
 
   async function handleContinue() {
     setLoading(true);
-    const res = await fetch("/api/user/role", {
+    const res = await clientApiFetch(getToken, "/api/user/role", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         role,
         department: role === "Doctor" ? department : undefined,

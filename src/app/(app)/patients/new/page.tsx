@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { PatientForm } from "@/components/PatientForm";
-import { listPatients } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
+import type { Patient } from "@/lib/types";
 
 export default async function NewPatientPage() {
-  const patients = await listPatients();
+  const patients = await serverApiJson<Patient[]>("/api/patients");
   const nextId = `PAT-${String(patients.length + 1).padStart(3, "0")}`;
 
   return (

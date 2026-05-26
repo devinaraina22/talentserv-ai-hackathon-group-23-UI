@@ -1,21 +1,17 @@
 import Link from "next/link";
-import { getDashboardStats } from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { getSessionProfile } from "@/lib/session";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
+import type { DashboardStats } from "@/lib/types";
 import { Calendar, CheckCircle2, Clock, Users } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  let profile;
-  try {
-    profile = await getSessionProfile();
-  } catch {
-    redirect("/onboarding");
-  }
+  const profile = await getSessionProfile();
   if (!profile) redirect("/onboarding");
 
-  const stats = await getDashboardStats(profile.role, profile.email, profile.department);
+  const stats = await serverApiJson<DashboardStats>("/api/dashboard");
 
   const statCards = [
     {

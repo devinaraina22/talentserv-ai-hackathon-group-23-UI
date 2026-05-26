@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  getAppointment,
-  getHealthIntake,
-  getPatient,
-} from "@/lib/db";
+import { serverApiJson } from "@/lib/api-server";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { StatusUpdater } from "@/components/StatusUpdater";
 import { RemindButtons } from "@/components/RemindButtons";
 import { canSendReminders } from "@/lib/auth";
 import { getSessionProfile } from "@/lib/session";
+import type { Appointment, HealthIntake, Patient } from "@/lib/types";
 import { FileText, Printer } from "lucide-react";
 
 export default async function AppointmentDetailPage({
@@ -19,11 +16,14 @@ export default async function AppointmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const appointment = await getAppointment(id);
-  if (!appointment) notFound();
+  const data = await serverApiJson<{
+    appointment: Appointment;
+    patient: Patient | null;
+    health: HealthIntake | null;
+  }>(`/api/appointments/${id}`).catch(() => null);
+  if (!data?.appointment) notFound();
 
-  const patient = await getPatient(appointment.patient_id);
-  const health = await getHealthIntake(appointment.patient_id);
+  const { appointment, patient, health } = data;
   const profile = await getSessionProfile();
   const showReminders = profile ? canSendReminders(profile.role) : false;
 

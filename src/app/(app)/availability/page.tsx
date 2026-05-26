@@ -1,6 +1,8 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { clientApiFetch } from "@/lib/api-client";
 import { PageHeader } from "@/components/PageHeader";
 import { DEPARTMENTS, TIME_SLOTS } from "@/lib/constants";
 import { DAY_NAMES } from "@/lib/constants";
@@ -10,6 +12,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 export default function AvailabilityPage() {
   const { profile } = useRole();
+  const { getToken } = useAuth();
   const [list, setList] = useState<DoctorAvailability[]>([]);
   const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
   const [day, setDay] = useState(1);
@@ -17,7 +20,7 @@ export default function AvailabilityPage() {
   const canManage = profile?.role === "Admin" || profile?.role === "Doctor";
 
   const load = () =>
-    fetch("/api/availability")
+    clientApiFetch(getToken, "/api/availability")
       .then((r) => r.json())
       .then(setList);
 
@@ -27,9 +30,8 @@ export default function AvailabilityPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    await fetch("/api/availability", {
+    await clientApiFetch(getToken, "/api/availability", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         doctor_or_department: dept,
         day_of_week: day,
@@ -40,7 +42,7 @@ export default function AvailabilityPage() {
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/availability/${id}`, { method: "DELETE" });
+    await clientApiFetch(getToken, `/api/availability/${id}`, { method: "DELETE" });
     load();
   }
 
