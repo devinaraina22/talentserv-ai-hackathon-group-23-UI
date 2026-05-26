@@ -18,7 +18,7 @@ cp .env.example .env.local   # add Clerk keys + API URLs
 npm run dev
 ```
 
-Open **http://localhost:3000** → Sign in → Onboarding → Dashboard.
+Open **http://localhost:3000** → Sign in → Dashboard.
 
 ## Environment
 
@@ -26,26 +26,36 @@ Open **http://localhost:3000** → Sign in → Onboarding → Dashboard.
 |----------|---------|
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk sign-in UI |
 | `CLERK_SECRET_KEY` | Server-side Clerk (session tokens) |
-| `NEXT_PUBLIC_API_URL` | Backend URL for browser (`http://localhost:3001`) |
-| `API_URL` | Backend URL for server components (same locally) |
+| `NEXT_PUBLIC_API_URL` | Backend URL for browser |
+| `API_URL` | Backend URL for server components |
+
+Local: both API URLs → `http://localhost:3001`
+
+## Deploy on Vercel (UI project)
+
+1. Import this repo → new Vercel project.
+2. Set environment variables:
+
+| Variable | Example |
+|----------|---------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | From Clerk dashboard |
+| `CLERK_SECRET_KEY` | From Clerk dashboard |
+| `NEXT_PUBLIC_API_URL` | `https://your-api.vercel.app` |
+| `API_URL` | Same as `NEXT_PUBLIC_API_URL` |
+
+3. In **Clerk dashboard**, add both UI and API Vercel URLs to allowed origins.
+4. Deploy the **backend first** (with Neon Postgres + seed). See backend README.
+
+No database or SMTP on the frontend project.
 
 ## Architecture
 
 ```
 Frontend (this repo)          Backend (PatientBookingAI-backend)
 ├── src/app/(app)/* pages     ├── src/app/api/*
-├── src/components/*    ──HTTP──►  src/lib/db.ts, email, Redis
+├── src/components/*    ──HTTP──►  Postgres (Neon) + db.ts
 └── Clerk auth UI             └── Clerk JWT verification + RBAC
 ```
-
-## Deploy (Vercel)
-
-Create a **UI-only** Vercel project from this repo:
-
-1. Env: Clerk keys + `NEXT_PUBLIC_API_URL` + `API_URL` → your backend Vercel URL
-2. No Redis/SMTP needed on frontend
-
-Backend deploy: see `PatientBookingAI-backend/README.md`.
 
 ## Commands
 
@@ -53,4 +63,4 @@ Backend deploy: see `PatientBookingAI-backend/README.md`.
 |---------|---------|
 | `npm run dev` | Frontend on :3000 |
 | `npm run build` | Production build |
-| `npm run test:e2e` | Playwright (requires both apps running) |
+| `npm run test:e2e` | Playwright (CI pre-builds both apps) |
