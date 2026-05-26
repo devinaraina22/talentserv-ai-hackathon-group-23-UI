@@ -33,6 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          repository: devinaraina22/talentserv-ai-hackathon-group-23-backend
+          path: backend
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -40,21 +46,20 @@ jobs:
 
       - run: npm ci
 
-      - run: npx playwright install --with-deps chromium
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
 
-      - name: Build for e2e
-        run: npm run build
-        env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder_key_012345678901234567890
-          CLERK_SECRET_KEY: sk_test_ci_placeholder_key_012345678901234567890
-          NEXT_PUBLIC_API_URL: http://localhost:3001
-          API_URL: http://localhost:3001
+      - run: npx playwright install --with-deps chromium
 
       - run: npm run test:e2e
         env:
           CI: true
+          BACKEND_DIR: backend
           E2E_TEST_MODE: "true"
+          NEXT_PUBLIC_E2E_TEST_MODE: "true"
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder_key_012345678901234567890
           CLERK_SECRET_KEY: sk_test_ci_placeholder_key_012345678901234567890
           NEXT_PUBLIC_API_URL: http://localhost:3001
           API_URL: http://localhost:3001
+          FRONTEND_URL: http://localhost:3000

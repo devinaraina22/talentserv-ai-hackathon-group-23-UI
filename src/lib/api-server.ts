@@ -1,4 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
+import { E2E_BEARER, E2E_ROLE_COOKIE, isE2eMode, parseE2eRole } from "./e2e";
 
 function getServerApiBase(): string {
   const base =
@@ -7,16 +9,27 @@ function getServerApiBase(): string {
 }
 
 export async function serverApiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const { getToken } = await auth();
-  const token = await getToken();
   const url = `${getServerApiBase()}${path.startsWith("/") ? path : `/${path}`}`;
+
+  let authHeaders: Record<string, string> = {};
+  if (isE2eMode()) {
+    const role = parseE2eRole((await cookies()).get(E2E_ROLE_COOKIE)?.value);
+    authHeaders = {
+      Authorization: `Bearer ${E2E_BEARER}`,
+      "X-E2E-Role": role,
+    };
+  } else {
+    const { getToken } = await auth();
+    const token = await getToken();
+    if (token) authHeaders.Authorization = `Bearer ${token}`;
+  }
 
   return fetch(url, {
     ...init,
     cache: "no-store",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...authHeaders,
       ...init?.headers,
     },
   });

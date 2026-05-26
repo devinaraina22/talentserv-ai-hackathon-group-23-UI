@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,7 +18,7 @@ export function AppointmentForm({
   defaultPatientId?: string;
 }) {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [form, setForm] = useState({
     patient_id: defaultPatientId ?? (patients[0]?.patient_id ?? ""),
     doctor_or_department: DEPARTMENTS[0] as string,

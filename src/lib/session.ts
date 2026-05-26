@@ -1,5 +1,12 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { serverApiJson } from "./api-server";
+import {
+  E2E_ROLE_COOKIE,
+  getE2eUser,
+  isE2eMode,
+  parseE2eRole,
+} from "./e2e";
 import type { UserProfile } from "./types";
 
 export async function getSessionUser(): Promise<{
@@ -7,6 +14,12 @@ export async function getSessionUser(): Promise<{
   email: string;
   name: string;
 } | null> {
+  if (isE2eMode()) {
+    const role = parseE2eRole((await cookies()).get(E2E_ROLE_COOKIE)?.value);
+    const user = getE2eUser(role);
+    return { userId: user.userId, email: user.email, name: user.name };
+  }
+
   const { userId } = await auth();
   if (!userId) return null;
   const user = await currentUser();

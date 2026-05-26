@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApiFetch } from "@/lib/api-client";
@@ -25,7 +25,7 @@ export function PatientForm({
   mode: "create" | "edit";
 }) {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [form, setForm] = useState<PatientFormData>({
     patient_id: initial?.patient_id ?? "",
     full_name: initial?.full_name ?? "",

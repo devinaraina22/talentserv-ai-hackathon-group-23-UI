@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApiFetch } from "@/lib/api-client";
@@ -15,7 +15,7 @@ export function StatusUpdater({
   currentStatus: AppointmentStatus;
 }) {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [status, setStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useEffect, useState } from "react";
 import { clientApiFetch } from "@/lib/api-client";
 import { PageHeader } from "@/components/PageHeader";
@@ -12,7 +12,7 @@ import { Plus, Trash2 } from "lucide-react";
 
 export default function AvailabilityPage() {
   const { profile } = useRole();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [list, setList] = useState<DoctorAvailability[]>([]);
   const [dept, setDept] = useState<string>(DEPARTMENTS[0]);
   const [day, setDay] = useState(1);

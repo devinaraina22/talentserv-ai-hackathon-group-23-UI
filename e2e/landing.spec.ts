@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 test.describe("Public landing", () => {
   test("shows MediBook branding and sign-in CTA", async ({ page }) => {

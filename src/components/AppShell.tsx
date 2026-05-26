@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { DISCLAIMER } from "@/lib/constants";
 import { canAccessNav, ROLE_COLORS } from "@/lib/auth";
+import { isE2eClient } from "@/lib/e2e";
 import { useRole } from "./RoleProvider";
+import type { UserProfile } from "@/lib/types";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,11 +26,49 @@ const navItems = [
   { href: "/audit", label: "Audit Log", icon: ClipboardList },
 ];
 
+function SidebarUserPanel({ profile, role }: { profile: UserProfile | null; role: string }) {
+  if (isE2eClient()) {
+    return (
+      <div className="mb-3 rounded-xl bg-white/5 p-3">
+        <p className="truncate text-sm font-medium">{profile?.name ?? "E2E User"}</p>
+        <p className="truncate text-xs text-slate-400">{profile?.email ?? ""}</p>
+        <span
+          className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
+          data-testid="user-role-badge"
+        >
+          {role}
+        </span>
+      </div>
+    );
+  }
+
+  return <ClerkSidebarUserPanel role={role} />;
+}
+
+function ClerkSidebarUserPanel({ role }: { role: string }) {
+  const { user } = useUser();
+  return (
+    <>
+      <div className="mb-3 rounded-xl bg-white/5 p-3">
+        <p className="truncate text-sm font-medium">{user?.fullName ?? "User"}</p>
+        <p className="truncate text-xs text-slate-400">
+          {user?.primaryEmailAddress?.emailAddress}
+        </p>
+        <span
+          className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
+          data-testid="user-role-badge"
+        >
+          {role}
+        </span>
+      </div>
+      <UserButton afterSignOutUrl="/" />
+    </>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user } = useUser();
   const { profile } = useRole();
-
   const role = profile?.role ?? "Receptionist";
   const visibleNav = navItems.filter((item) => canAccessNav(role, item.href));
 
@@ -55,6 +95,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
+                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
                   active
                     ? "bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-white ring-1 ring-white/20"
@@ -69,18 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="border-t border-white/10 p-4">
-          <div className="mb-3 rounded-xl bg-white/5 p-3">
-            <p className="truncate text-sm font-medium">{user?.fullName ?? "User"}</p>
-            <p className="truncate text-xs text-slate-400">
-              {user?.primaryEmailAddress?.emailAddress}
-            </p>
-            <span
-              className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[role]}`}
-            >
-              {role}
-            </span>
-          </div>
-          <UserButton afterSignOutUrl="/" />
+          <SidebarUserPanel profile={profile} role={role} />
         </div>
       </aside>
 

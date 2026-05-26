@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useState } from "react";
 import { clientApiFetch } from "@/lib/api-client";
 import { Mail, MessageSquare } from "lucide-react";
@@ -23,7 +23,7 @@ export function RemindButtons({
   appointmentDate: string;
   appointmentTime: string;
 }) {
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<"email" | "sms" | null>(null);

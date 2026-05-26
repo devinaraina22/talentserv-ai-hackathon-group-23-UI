@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApiFetch } from "@/lib/api-client";
@@ -25,7 +25,7 @@ export function HealthIntakeForm({
   initial?: Partial<HealthFormData>;
 }) {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [form, setForm] = useState<HealthFormData>({
     patient_id: patientId,
     symptoms: initial?.symptoms ?? "",

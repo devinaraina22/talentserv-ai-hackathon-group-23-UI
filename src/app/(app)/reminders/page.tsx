@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { useEffect, useState } from "react";
 import { clientApiFetch } from "@/lib/api-client";
 import { PageHeader } from "@/components/PageHeader";
@@ -20,7 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function RemindersPage() {
   const { profile } = useRole();
-  const { getToken } = useAuth();
+  const { getToken } = useAppAuth();
   const [reminders, setReminders] = useState<ReminderLog[]>([]);
   const [appointmentId, setAppointmentId] = useState("APT-001");
   const [sending, setSending] = useState<"email" | "sms" | null>(null);
