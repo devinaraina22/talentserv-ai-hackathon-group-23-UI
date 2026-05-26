@@ -9,6 +9,7 @@ const clerkSecretKey =
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const backendDir =
   process.env.BACKEND_DIR ?? path.join(process.cwd(), "../PatientBookingAI-backend");
+const isCI = !!process.env.CI;
 
 const e2eEnv = {
   E2E_TEST_MODE: "true",
@@ -25,12 +26,19 @@ const serverEnv = {
   FRONTEND_URL: "http://localhost:3000",
 };
 
+/** CI pre-builds in GitHub Actions; locally we build inside webServer unless already built. */
+const backendCommand = isCI
+  ? "npm run start"
+  : "npm run db:seed && npm run build && npm run start";
+
+const frontendCommand = isCI ? "npm run start" : "next dev";
+
 export default defineConfig({
   testDir: "./e2e",
-  globalSetup: "./e2e/global-setup.ts",
+  ...(isCI ? {} : { globalSetup: "./e2e/global-setup.ts" }),
   fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
   workers: 1,
   reporter: [["html", { open: "never" }], ["list"]],
   timeout: 60_000,
@@ -43,21 +51,21 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "npm run db:seed && npm run build && npm run start",
+      command: backendCommand,
       cwd: backendDir,
       url: `${apiUrl}/api/health`,
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      reuseExistingServer: !isCI,
+      timeout: isCI ? 60_000 : 180_000,
       env: {
         ...serverEnv,
         E2E_TEST_MODE: "true",
       },
     },
     {
-      command: process.env.CI ? "npm run build && npm run start" : "next dev",
+      command: frontendCommand,
       url: "http://localhost:3000",
-      reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      reuseExistingServer: !isCI,
+      timeout: isCI ? 60_000 : 120_000,
       env: serverEnv,
     },
   ],

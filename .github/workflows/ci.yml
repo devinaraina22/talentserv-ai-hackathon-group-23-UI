@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, master]
 
+env:
+  CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder_key_012345678901234567890
+  CLERK_SECRET_KEY: sk_test_ci_placeholder_key_012345678901234567890
+  API_URL: http://localhost:3001
+  NEXT_PUBLIC_API_URL: http://localhost:3001
+
 jobs:
   frontend-build:
     runs-on: ubuntu-latest
@@ -22,10 +28,10 @@ jobs:
       - name: Build frontend
         run: npm run build
         env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder_key_012345678901234567890
-          CLERK_SECRET_KEY: sk_test_ci_placeholder_key_012345678901234567890
-          NEXT_PUBLIC_API_URL: http://localhost:3001
-          API_URL: http://localhost:3001
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          API_URL: ${{ env.API_URL }}
 
   e2e:
     runs-on: ubuntu-latest
@@ -33,10 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout backend
+      - name: Checkout backend (api-only)
         uses: actions/checkout@v4
         with:
           repository: devinaraina22/talentserv-ai-hackathon-group-23-backend
+          ref: api-only
           path: backend
 
       - uses: actions/setup-node@v4
@@ -50,6 +57,31 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Build backend for e2e
+        working-directory: backend
+        run: npm run build
+        env:
+          E2E_TEST_MODE: "true"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
+
+      - name: Seed backend data
+        working-directory: backend
+        run: npm run db:seed
+        env:
+          E2E_TEST_MODE: "true"
+
+      - name: Build frontend for e2e
+        run: npm run build
+        env:
+          CI: true
+          E2E_TEST_MODE: "true"
+          NEXT_PUBLIC_E2E_TEST_MODE: "true"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          API_URL: ${{ env.API_URL }}
+
       - run: npx playwright install --with-deps chromium
 
       - run: npm run test:e2e
@@ -58,8 +90,8 @@ jobs:
           BACKEND_DIR: backend
           E2E_TEST_MODE: "true"
           NEXT_PUBLIC_E2E_TEST_MODE: "true"
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder_key_012345678901234567890
-          CLERK_SECRET_KEY: sk_test_ci_placeholder_key_012345678901234567890
-          NEXT_PUBLIC_API_URL: http://localhost:3001
-          API_URL: http://localhost:3001
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ env.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          API_URL: ${{ env.API_URL }}
           FRONTEND_URL: http://localhost:3000
