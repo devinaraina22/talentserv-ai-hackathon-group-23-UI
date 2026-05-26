@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -6,11 +7,19 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+const clerkHandler = clerkMiddleware(async (auth, request) => {
   if (!isPublicRoute(request)) {
     await auth.protect();
   }
 });
+
+/** CI e2e runs without real Clerk keys — skip auth middleware entirely. */
+export default function middleware(request: NextRequest, event: NextFetchEvent) {
+  if (process.env.E2E_TEST_MODE === "true") {
+    return NextResponse.next();
+  }
+  return clerkHandler(request, event);
+}
 
 export const config = {
   matcher: [

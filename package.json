@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx scripts/check-clerk-env.ts && next dev",
+    "dev": "next dev",
+    "check:env": "tsx scripts/check-clerk-env.ts",
+    "dev:safe": "npm run check:env && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

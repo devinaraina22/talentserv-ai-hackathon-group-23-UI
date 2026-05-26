@@ -6,8 +6,10 @@ import { UI } from "@/lib/user-messages";
 import { Activity, ArrowRight, Calendar, Shield } from "lucide-react";
 
 export default async function HomePage() {
-  const { userId } = await auth();
-  if (userId) redirect("/dashboard");
+  if (process.env.E2E_TEST_MODE !== "true") {
+    const { userId } = await auth();
+    if (userId) redirect("/dashboard");
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0b1220] text-white">

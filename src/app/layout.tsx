@@ -15,11 +15,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className="min-h-screen antialiased">{children}</body>
-      </html>
-    </ClerkProvider>
+  const content = (
+    <html lang="en">
+      <body className="min-h-screen antialiased">{children}</body>
+    </html>
   );
+
+  if (process.env.E2E_TEST_MODE === "true") {
+    return content;
+  }
+
+  return <ClerkProvider>{content}</ClerkProvider>;
 }
