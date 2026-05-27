@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { apiHeaders, API_BASE } from "./fixtures";
+import { apiHeaders, API_BASE, ensureAppReady, setE2eRole } from "./fixtures";
 
 const PERF = {
   pageLoadMs: 8000,
@@ -15,17 +15,9 @@ test.describe("Performance thresholds", () => {
   });
 
   test("admin dashboard loads within threshold", async ({ page, context }) => {
-    await context.addCookies([
-      {
-        name: "medibook_e2e_role",
-        value: "Admin",
-        domain: "localhost",
-        path: "/",
-      },
-    ]);
+    await setE2eRole(context, "Admin");
     const start = Date.now();
-    await page.goto("/dashboard");
-    await page.waitForURL("**/dashboard");
+    await ensureAppReady(page, "Admin");
     await expect(page.getByText("Total Appointments")).toBeVisible();
     expect(Date.now() - start).toBeLessThan(PERF.pageLoadMs);
   });

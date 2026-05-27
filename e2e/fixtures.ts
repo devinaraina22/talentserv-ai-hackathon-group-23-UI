@@ -1,4 +1,4 @@
-import { test as base, type BrowserContext, type Page } from "@playwright/test";
+import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 
 export const E2E_ROLE_COOKIE = "medibook_e2e_role";
 export const E2E_BEARER = "e2e-test-token";
@@ -15,6 +15,16 @@ export async function setE2eRole(context: BrowserContext, role: E2eRole) {
       path: "/",
     },
   ]);
+}
+
+/** Provision role profile via API and land on dashboard when layout redirects to onboarding. */
+export async function ensureAppReady(page: Page, role: E2eRole) {
+  await page.goto("/dashboard");
+  if (page.url().includes("/onboarding")) {
+    await page.waitForURL("**/dashboard", { timeout: 20_000 });
+  }
+  await page.getByTestId("user-role-badge").waitFor({ state: "visible" });
+  await expect(page.getByTestId("user-role-badge")).toHaveText(role);
 }
 
 export function apiHeaders(role: E2eRole): Record<string, string> {
@@ -35,6 +45,7 @@ export const test = base.extend<RoleFixtures>({
     const context = await browser.newContext();
     await setE2eRole(context, "Admin");
     const page = await context.newPage();
+    await ensureAppReady(page, "Admin");
     await use(page);
     await context.close();
   },
@@ -42,6 +53,7 @@ export const test = base.extend<RoleFixtures>({
     const context = await browser.newContext();
     await setE2eRole(context, "Patient");
     const page = await context.newPage();
+    await ensureAppReady(page, "Patient");
     await use(page);
     await context.close();
   },

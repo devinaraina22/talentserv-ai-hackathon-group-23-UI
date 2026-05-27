@@ -32,7 +32,7 @@ test.describe("Admin UI flows (positive)", () => {
   test("dashboard loads with stats", async ({ adminPage }) => {
     await adminPage.goto("/dashboard");
     await adminPage.waitForURL("**/dashboard");
-    await expect(adminPage.getByRole("heading", { name: /good day/i })).toBeVisible();
+    await expect(adminPage.getByRole("heading", { name: /hello,/i })).toBeVisible();
     await expect(adminPage.getByText("Total Appointments")).toBeVisible();
     await expect(adminPage.getByTestId("user-role-badge")).toHaveText("Admin");
   });

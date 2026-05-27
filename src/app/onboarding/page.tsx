@@ -4,6 +4,7 @@ import { useAppAuth } from "@/hooks/useAppAuth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApiFetch } from "@/lib/api-client";
+import { isE2eClient } from "@/lib/e2e";
 import { Shield } from "lucide-react";
 import { AmbientBackground } from "@/components/AmbientBackground";
 
@@ -13,7 +14,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!isE2eClient() && (!isLoaded || !isSignedIn)) return;
 
     clientApiFetch(getToken, "/api/user/role", { method: "POST" })
       .then(async (res) => {
