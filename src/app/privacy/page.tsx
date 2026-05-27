@@ -65,7 +65,7 @@ export default function PrivacyPage() {
           <h2>Demo notice</h2>
           <p className="legal-notice">{DISCLAIMER}</p>
         </article>
-        <LegalFooter className="mt-12 !static !transform-none !max-w-none" />
+        <LegalFooter className="mt-12" />
       </div>
     </main>
   );

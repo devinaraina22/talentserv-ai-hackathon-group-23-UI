@@ -44,11 +44,11 @@ export default function TermsPage() {
             <li>Do not misuse automated tools to disrupt the service</li>
           </ul>
 
-          <h2>AI assistant &amp; call support</h2>
+          <h2>AI booking assistant</h2>
           <p>
-            Chat and voice assistants help guide booking flows. Responses are automated
+            The chat assistant helps guide booking flows. Responses are automated
             and may be incomplete. Always verify appointment details in your confirmation
-            email and receipt. Voice call support in this demo is simulated.
+            email and receipt.
           </p>
 
           <h2>Limitation of liability</h2>
@@ -65,7 +65,7 @@ export default function TermsPage() {
 
           <p className="legal-notice">{DISCLAIMER}</p>
         </article>
-        <LegalFooter className="mt-12 !static !transform-none !max-w-none" />
+        <LegalFooter className="mt-12" />
       </div>
     </main>
   );

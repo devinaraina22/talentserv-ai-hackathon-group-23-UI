@@ -1,8 +1,12 @@
 import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
 
+const isCI = !!process.env.CI;
+const e2eBackendPort = isCI ? 3001 : 3002;
+
 export const E2E_ROLE_COOKIE = "medibook_e2e_role";
 export const E2E_BEARER = "e2e-test-token";
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ?? `http://localhost:${e2eBackendPort}`;
 
 export type E2eRole = "Admin" | "Patient";
 
@@ -25,6 +29,46 @@ export async function ensureAppReady(page: Page, role: E2eRole) {
   }
   await page.getByTestId("user-role-badge").waitFor({ state: "visible" });
   await expect(page.getByTestId("user-role-badge")).toHaveText(role);
+}
+
+export async function fillPatientForm(
+  page: Page,
+  data: {
+    patientId: string;
+    name: string;
+    age: string;
+    phone: string;
+    email: string;
+    city: string;
+    countryCode?: string;
+  }
+) {
+  const inputs = page.locator("form input.input-field");
+  await inputs.nth(0).fill(data.patientId);
+  await inputs.nth(1).fill(data.name);
+  await inputs.nth(2).fill(data.age);
+  await inputs.nth(3).fill(data.phone);
+  await inputs.nth(4).fill(data.email);
+
+  const countrySelect = page.getByTestId("country-select");
+  await countrySelect.waitFor({ state: "visible" });
+  await expect(countrySelect.locator("option")).not.toHaveCount(1, { timeout: 15_000 });
+  await countrySelect.selectOption(data.countryCode ?? "IN");
+
+  const cityInput = page.getByTestId("city-input");
+  await expect(cityInput).toBeEnabled();
+  await cityInput.fill(data.city);
+
+  await cityInput.fill(data.city);
+  await page.waitForTimeout(350);
+
+  const suggestion = page.getByTestId("city-suggestion").filter({ hasText: data.city }).first();
+  if (await suggestion.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await suggestion.click();
+  }
+
+  // Blur city field so the suggestions panel does not intercept submit clicks.
+  await inputs.nth(1).click();
 }
 
 export function apiHeaders(role: E2eRole): Record<string, string> {

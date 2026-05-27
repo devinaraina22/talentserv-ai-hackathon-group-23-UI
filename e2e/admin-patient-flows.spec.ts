@@ -1,32 +1,4 @@
-import { test, expect, sampleBookingDate } from "./fixtures";
-
-async function fillPatientForm(
-  page: import("@playwright/test").Page,
-  data: {
-    patientId: string;
-    name: string;
-    age: string;
-    phone: string;
-    email: string;
-    city: string;
-    countryCode?: string;
-  }
-) {
-  const inputs = page.locator("form input.input-field");
-  await inputs.nth(0).fill(data.patientId);
-  await inputs.nth(1).fill(data.name);
-  await inputs.nth(2).fill(data.age);
-  await inputs.nth(3).fill(data.phone);
-  await inputs.nth(4).fill(data.email);
-
-  await page.getByTestId("country-select").selectOption(data.countryCode ?? "IN");
-  const cityInput = page.getByTestId("city-input");
-  await cityInput.fill(data.city);
-  const suggestion = page.getByTestId("city-suggestion").filter({ hasText: data.city }).first();
-  if (await suggestion.isVisible().catch(() => false)) {
-    await suggestion.click();
-  }
-}
+import { test, expect, sampleBookingDate, fillPatientForm } from "./fixtures";
 
 test.describe("Admin UI flows (positive)", () => {
   test("dashboard loads with stats", async ({ adminPage }) => {
@@ -94,9 +66,11 @@ test.describe("Admin UI flows (positive)", () => {
     await adminPage.locator("select.input-field").nth(0).selectOption("PAT-001");
     await adminPage.locator("select.input-field").nth(1).selectOption("General Physician");
     await adminPage.locator('input[type="date"]').fill(sampleBookingDate());
-    await expect(adminPage.locator("select.input-field").nth(2)).toBeVisible({
-      timeout: 15_000,
-    });
+    const timeSelect = adminPage.locator("select.input-field").nth(2);
+    await expect(timeSelect).toBeVisible({ timeout: 15_000 });
+    await expect(timeSelect.locator("option")).not.toHaveCount(0);
+    const firstSlot = await timeSelect.locator("option").nth(1).getAttribute("value");
+    if (firstSlot) await timeSelect.selectOption(firstSlot);
     await adminPage.getByRole("button", { name: /book appointment/i }).click();
     await adminPage.waitForURL(/\/appointments\/APT-\d+\/receipt/);
     await expect(adminPage.getByText("Appointment Confirmation Receipt")).toBeVisible();
@@ -105,9 +79,7 @@ test.describe("Admin UI flows (positive)", () => {
   test("audit log accessible for admin", async ({ adminPage }) => {
     await adminPage.goto("/audit");
     await expect(adminPage.getByRole("heading", { name: "Audit Log" })).toBeVisible();
-    await expect(
-      adminPage.getByText("ASSIGN_ROLE").or(adminPage.getByText("CREATE"))
-    ).toBeVisible();
+    await expect(adminPage.getByRole("cell", { name: "ASSIGN_ROLE" })).toBeVisible();
   });
 });
 

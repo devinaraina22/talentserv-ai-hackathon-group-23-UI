@@ -7,7 +7,7 @@ import { useAppAuth } from "@/hooks/useAppAuth";
 import { clientApiFetch } from "@/lib/api-client";
 import { APPOINTMENT_TYPES, DEPARTMENTS } from "@/lib/constants";
 import { useRole } from "./RoleProvider";
-import type { Patient } from "@/lib/types";
+import type { Patient, UserRole } from "@/lib/types";
 
 type ChatOption = { label: string; value: string };
 
@@ -41,6 +41,32 @@ type Step =
 
 function uid() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+function noPatientMessage(role: UserRole | undefined): { text: string; options?: ChatOption[] } {
+  if (role === "Patient") {
+    return {
+      text:
+        "It looks like you're not registered as a patient yet. Please ask clinic staff to add your record using the Patients tab — they can register you there.",
+    };
+  }
+  if (role === "Doctor") {
+    return {
+      text:
+        "No patients are available yet. Please register the patient first using the Patients tab.",
+      options: [{ label: "Open Patients tab", value: "link:/patients" }],
+    };
+  }
+  if (role === "Admin" || role === "Receptionist") {
+    return {
+      text:
+        "No patients are available yet. Please register a patient first using the Patients tab.",
+      options: [{ label: "Register patient", value: "link:/patients/new" }],
+    };
+  }
+  return {
+    text: "You need a patient profile before booking. Please ask clinic staff for help.",
+  };
 }
 
 export function BookingChatbot({
@@ -202,10 +228,8 @@ export function BookingChatbot({
     if (value === "book") {
       pushUser("Book an appointment");
       if (patients.length === 0) {
-        pushBot(
-          "You need a patient profile first.",
-          [{ label: "Register patient", value: "link:/patients/new" }]
-        );
+        const msg = noPatientMessage(profile?.role);
+        pushBot(msg.text, msg.options);
         return;
       }
       if (patients.length === 1) {

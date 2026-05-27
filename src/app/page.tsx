@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CLINIC, DISCLAIMER } from "@/lib/constants";
 import { UI } from "@/lib/user-messages";
 import { CIRCADIAN_PHASES } from "@/lib/circadian";
-import { Activity, ArrowRight, MessageCircle, Phone, Shield, Sparkles } from "lucide-react";
+import { Activity, ArrowRight, MessageCircle, Shield, Sparkles } from "lucide-react";
 import { AmbientBackground } from "@/components/AmbientBackground";
 import { AssistWidgets } from "@/components/AssistWidgets";
 import { CircadianInfoBanner } from "@/components/CircadianInfoBanner";
@@ -33,13 +33,6 @@ export default async function HomePage() {
       label: "AI Booking Chat",
       desc: "Book appointments step-by-step through conversation",
       theme: "feature-purple",
-    },
-    {
-      icon: Phone,
-      emoji: "📞",
-      label: "Call Support",
-      desc: "AI voice assistant for scheduling help",
-      theme: "feature-blue",
     },
     {
       icon: Shield,
@@ -125,7 +118,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <LegalFooter className="relative z-10 mx-auto max-w-4xl px-6 pb-8 !static !transform-none" />
+      <LegalFooter className="landing-footer" />
     </main>
   );
 }
