@@ -20,7 +20,7 @@ type PatientFormData = {
   city: string;
 };
 
-const DEFAULT_COUNTRY = { country: "India", country_code: "IN" };
+const DEFAULT_COUNTRY = { country: "", country_code: "" };
 
 export function PatientForm({
   initial,

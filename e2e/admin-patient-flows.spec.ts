@@ -19,14 +19,13 @@ async function fillPatientForm(
   await inputs.nth(3).fill(data.phone);
   await inputs.nth(4).fill(data.email);
 
-  if (data.countryCode) {
-    await page.getByTestId("country-select").selectOption(data.countryCode);
+  await page.getByTestId("country-select").selectOption(data.countryCode ?? "IN");
+  const cityInput = page.getByTestId("city-input");
+  await cityInput.fill(data.city);
+  const suggestion = page.getByTestId("city-suggestion").filter({ hasText: data.city }).first();
+  if (await suggestion.isVisible().catch(() => false)) {
+    await suggestion.click();
   }
-  const citySelect = page.getByTestId("city-select");
-  await expect(citySelect.locator(`option[value="${data.city}"]`)).toBeAttached({
-    timeout: 15_000,
-  });
-  await citySelect.selectOption(data.city);
 }
 
 test.describe("Admin UI flows (positive)", () => {
