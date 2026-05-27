@@ -1,3 +1,4 @@
+import { demoAuthHeaders, isDemoClient } from "./demo-auth";
 import { e2eAuthHeaders, isE2eClient } from "./e2e";
 
 export function getPublicApiBase(): string {
@@ -17,7 +18,8 @@ export async function clientApiFetch(
   init?: RequestInit
 ): Promise<Response> {
   const e2eHeaders = isE2eClient() ? e2eAuthHeaders() : {};
-  const token = isE2eClient() ? null : await getToken();
+  const demoHeaders = isDemoClient() ? demoAuthHeaders() : {};
+  const token = isE2eClient() || isDemoClient() ? null : await getToken();
 
   try {
     return await fetch(apiUrl(path), {
@@ -26,6 +28,7 @@ export async function clientApiFetch(
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...e2eHeaders,
+        ...demoHeaders,
         ...init?.headers,
       },
     });

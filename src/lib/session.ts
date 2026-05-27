@@ -2,23 +2,86 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { serverApiJson } from "./api-server";
 import {
+  DEMO_PATIENT,
+  DEMO_SESSION_COOKIE,
+  demoAuthHeaders,
+  isDemoLoginEnabled,
+} from "./demo-auth";
+import { isPatientSession, parsePatientSession, demoPatientUserId } from "./demo-session";
+import {
   E2E_ROLE_COOKIE,
   getE2eUser,
   isE2eMode,
   parseE2eRole,
 } from "./e2e";
-import type { UserProfile } from "./types";
+import { apiUrl } from "./api-client";
+import type { UserProfile, UserRole } from "./types";
+
+async function getDemoSessionUserFromCookie(): Promise<{
+  userId: string;
+  email: string;
+  name: string;
+  role?: UserRole;
+  department?: string;
+} | null> {
+  if (!isDemoLoginEnabled()) return null;
+  const cookie = (await cookies()).get(DEMO_SESSION_COOKIE)?.value;
+  if (!cookie) return null;
+
+  if (isPatientSession(cookie)) {
+    if (cookie === "patient") {
+      return { ...DEMO_PATIENT, role: "Patient" };
+    }
+    const payload = parsePatientSession(cookie);
+    if (!payload) return null;
+    return {
+      userId: demoPatientUserId(payload.email),
+      email: payload.email,
+      name: payload.name,
+      role: "Patient",
+    };
+  }
+
+  try {
+    const res = await fetch(
+      apiUrl(`/api/demo-login?session=${encodeURIComponent(cookie)}`),
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      user?: {
+        userId: string;
+        email: string;
+        name: string;
+        role?: UserRole;
+        department?: string;
+      };
+    };
+    return data.user ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function getSessionUser(): Promise<{
   userId: string;
   email: string;
   name: string;
+  role?: UserRole;
 } | null> {
   if (isE2eMode()) {
     const role = parseE2eRole((await cookies()).get(E2E_ROLE_COOKIE)?.value);
     const user = getE2eUser(role);
-    return { userId: user.userId, email: user.email, name: user.name };
+    return {
+      userId: user.userId,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
   }
+
+  const demoUser = await getDemoSessionUserFromCookie();
+  if (demoUser) return demoUser;
 
   const { userId } = await auth();
   if (!userId) return null;

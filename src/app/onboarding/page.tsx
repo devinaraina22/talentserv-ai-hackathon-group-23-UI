@@ -1,32 +1,31 @@
 "use client";
 
-import { useAppAuth } from "@/hooks/useAppAuth";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { clientApiFetch } from "@/lib/api-client";
+import { isDemoLoginEnabled } from "@/lib/demo-auth";
 import { isE2eClient } from "@/lib/e2e";
 import { AmbientBackground } from "@/components/AmbientBackground";
 import { MediBookLogo } from "@/components/MediBookLogo";
 
 export default function OnboardingPage() {
-  const router = useRouter();
   const { getToken, isLoaded, isSignedIn } = useAppAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isE2eClient() && (!isLoaded || !isSignedIn)) return;
+    if (!isE2eClient() && !isDemoLoginEnabled() && (!isLoaded || !isSignedIn)) return;
 
     clientApiFetch(getToken, "/api/user/role", { method: "POST" })
       .then(async (res) => {
         if (res.ok) {
-          router.replace("/dashboard");
+          window.location.assign("/dashboard");
           return;
         }
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         setError(body.error ?? "Could not finish setup. Please refresh and try again.");
       })
       .catch(() => setError("Could not finish setup. Please refresh and try again."));
-  }, [getToken, isLoaded, isSignedIn, router]);
+  }, [getToken, isLoaded, isSignedIn]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">

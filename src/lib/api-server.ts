@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
+import { demoAuthHeaders, isDemoLoginEnabled, DEMO_SESSION_COOKIE } from "./demo-auth";
 import { E2E_BEARER, E2E_ROLE_COOKIE, isE2eMode, parseE2eRole } from "./e2e";
 
 function getServerApiBase(): string {
@@ -18,7 +19,14 @@ export async function serverApiFetch(path: string, init?: RequestInit): Promise<
       Authorization: `Bearer ${E2E_BEARER}`,
       "X-E2E-Role": role,
     };
-  } else {
+  } else if (isDemoLoginEnabled()) {
+    const demoSession = (await cookies()).get(DEMO_SESSION_COOKIE)?.value;
+    if (demoSession) {
+      authHeaders = demoAuthHeaders(demoSession);
+    }
+  }
+
+  if (!authHeaders.Authorization) {
     const { getToken } = await auth();
     const token = await getToken();
     if (token) authHeaders.Authorization = `Bearer ${token}`;

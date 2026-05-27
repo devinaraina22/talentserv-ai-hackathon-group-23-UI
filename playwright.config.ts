@@ -23,6 +23,8 @@ const e2eEnv = {
 const serverEnv = {
   ...process.env,
   ...e2eEnv,
+  NEXT_PUBLIC_DEMO_LOGIN: "false",
+  DEMO_LOGIN: "false",
   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: clerkPublishableKey,
   CLERK_SECRET_KEY: clerkSecretKey,
   NEXT_PUBLIC_API_URL: apiUrl,

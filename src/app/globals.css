@@ -791,6 +791,70 @@ body {
 
   .card-cute { background: var(--cr-surface); }
 
+  .login-card {
+    @apply rounded-xl p-8;
+    background: var(--cr-surface-solid);
+    border: 1px solid var(--cr-border);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .login-label {
+    @apply mb-1.5 block text-sm font-medium;
+    color: var(--cr-text-soft);
+  }
+
+  .login-input {
+    @apply w-full rounded-lg border px-3 py-2.5 text-sm outline-none transition;
+    background: var(--cr-surface);
+    border-color: var(--cr-border);
+    color: var(--cr-text);
+  }
+
+  .login-input:focus {
+    border-color: var(--cr-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cr-accent) 20%, transparent);
+  }
+
+  .login-btn-primary {
+    @apply w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition;
+    background: var(--cr-accent);
+  }
+
+  .login-btn-primary:hover:not(:disabled) { opacity: 0.92; }
+  .login-btn-primary:disabled { opacity: 0.6; }
+
+  .login-btn-google {
+    @apply flex w-full items-center justify-center gap-3 rounded-lg border px-4 py-2.5 text-sm font-medium transition;
+    background: var(--cr-surface-solid);
+    border-color: var(--cr-border);
+    color: var(--cr-text);
+  }
+
+  .login-btn-google:hover:not(:disabled) {
+    background: var(--cr-surface);
+  }
+
+  .login-btn-google:disabled { opacity: 0.6; }
+
+  .login-divider {
+    @apply relative my-6 text-center text-xs;
+    color: var(--cr-text-muted);
+  }
+
+  .login-divider::before,
+  .login-divider::after {
+    content: "";
+    @apply absolute top-1/2 h-px w-[42%];
+    background: var(--cr-border);
+  }
+
+  .login-divider::before { left: 0; }
+  .login-divider::after { right: 0; }
+
+  .login-error {
+    @apply mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700;
+  }
+
   .animate-fade-in { animation: fadeIn 0.45s var(--cr-spring); }
 }
 

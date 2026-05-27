@@ -5,6 +5,7 @@ import { DISCLAIMER } from "@/lib/constants";
 import { clerkAppearance, clerkLocalization } from "@/lib/clerk-appearance";
 import { AppAuthProvider } from "@/hooks/useAppAuth";
 import { isE2eMode } from "@/lib/e2e";
+import { isDemoLoginEnabled } from "@/lib/demo-auth";
 import { CircadianThemeProvider } from "@/components/CircadianThemeProvider";
 
 export const metadata: Metadata = {
@@ -33,8 +34,8 @@ export default function RootLayout({
     </html>
   );
 
-  // CI e2e uses cookie-based auth — Clerk rejects placeholder keys if Provider mounts.
-  if (isE2eMode()) {
+  // CI e2e and demo login use cookie-based auth — Clerk rejects keys if Provider mounts unnecessarily.
+  if (isE2eMode() || isDemoLoginEnabled()) {
     return content;
   }
 

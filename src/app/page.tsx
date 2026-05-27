@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CLINIC, DISCLAIMER } from "@/lib/constants";
+import { DEMO_SESSION_COOKIE, isDemoLoginEnabled } from "@/lib/demo-auth";
 import { UI } from "@/lib/user-messages";
 import { CIRCADIAN_PHASES } from "@/lib/circadian";
 import { Activity, ArrowRight, MessageCircle, Shield, Sparkles } from "lucide-react";
@@ -13,8 +15,13 @@ import { MediBookLogo } from "@/components/MediBookLogo";
 
 export default async function HomePage() {
   if (process.env.E2E_TEST_MODE !== "true") {
-    const { userId } = await auth();
-    if (userId) redirect("/dashboard");
+    if (isDemoLoginEnabled()) {
+      const demoSession = (await cookies()).get(DEMO_SESSION_COOKIE)?.value;
+      if (demoSession) redirect("/dashboard");
+    } else {
+      const { userId } = await auth();
+      if (userId) redirect("/dashboard");
+    }
   }
 
   const phases = Object.entries(CIRCADIAN_PHASES).map(([key, p]) => ({ key, ...p }));
@@ -71,12 +78,14 @@ export default async function HomePage() {
         <p className="cute-notice mt-5 max-w-lg">{DISCLAIMER}</p>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/sign-in" className="btn-primary px-7 py-3.5 text-[15px]">
+          <Link href="/login" className="btn-primary px-7 py-3.5 text-[15px]">
             Sign In <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link href="/sign-up" className="btn-secondary px-7 py-3.5 text-[15px]">
-            Create Free Account
-          </Link>
+          {!isDemoLoginEnabled() && (
+            <Link href="/sign-up" className="btn-secondary px-7 py-3.5 text-[15px]">
+              Create Free Account
+            </Link>
+          )}
         </div>
 
         <div className="mt-14">

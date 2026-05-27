@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { canAccessNav, ROLE_COLORS } from "@/lib/auth";
+import { clearDemoSession, isDemoLoginEnabled } from "@/lib/demo-auth";
 import { isE2eClient } from "@/lib/e2e";
 import { useRole } from "./RoleProvider";
 import { AmbientBackground } from "./AmbientBackground";
@@ -67,21 +68,36 @@ const navItems: Omit<BubbleNavItem, "testId">[] = [
   },
 ];
 
-function TopUserChip({ profile, role }: { profile: UserProfile | null; role: string }) {
-  if (isE2eClient()) {
-    return (
-      <div className="top-user-chip">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold top-user-name">{profile?.name ?? "E2E User"}</p>
-          <span
-            className={`mt-0.5 inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
-            data-testid="user-role-badge"
-          >
-            {role}
-          </span>
-        </div>
+function DemoUserChip({ profile, role }: { profile: UserProfile | null; role: string }) {
+  return (
+    <div className="top-user-chip flex items-center gap-3">
+      <div className="min-w-0 text-right">
+        <p className="truncate text-sm font-semibold top-user-name">{profile?.name ?? "Demo User"}</p>
+        <span
+          className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
+          data-testid="user-role-badge"
+        >
+          {role}
+        </span>
       </div>
-    );
+      <button
+        type="button"
+        className="btn-secondary px-3 py-1.5 text-xs"
+        onClick={() => {
+          clearDemoSession();
+          sessionStorage.removeItem("medibook_role_profile_v1");
+          window.location.href = "/login";
+        }}
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
+
+function TopUserChip({ profile, role }: { profile: UserProfile | null; role: string }) {
+  if (isE2eClient() || isDemoLoginEnabled()) {
+    return <DemoUserChip profile={profile} role={role} />;
   }
 
   return <ClerkTopUserChip role={role} />;
