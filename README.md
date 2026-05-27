@@ -2,6 +2,21 @@
 
 Next.js UI for MediBook Clinic. All data flows through the **separate backend API** at `NEXT_PUBLIC_API_URL`.
 
+## Hackathon Submission (Group 23)
+
+**TalentServ AI Hackathon — MediBook Clinic**
+
+| Resource | Link |
+|----------|------|
+| **Submission index** | [docs/submission/SUBMISSION_INDEX.md](./docs/submission/SUBMISSION_INDEX.md) |
+| **Production UI** | https://talentserv-ai-hackathon-group-23-ui-devinaraina22s-projects.vercel.app |
+| **Production API** | https://talentserv-ai-hackathon-group-23-ba.vercel.app |
+| **UI GitHub** | https://github.com/devinaraina22/talentserv-ai-hackathon-group-23-UI |
+| **API GitHub** | https://github.com/devinaraina22/talentserv-ai-hackathon-group-23-backend |
+| **Agentic evidence** | [AGENTIC_EVIDENCE.md](./AGENTIC_EVIDENCE.md) |
+
+Full documentation: requirements, architecture, test plan, and self-review in [`docs/submission/`](./docs/submission/).
+
 ## Quick start (local)
 
 Run **both** projects:
