@@ -37,7 +37,7 @@ export function RoleProvider({ children }: { children: React.ReactNode }) {
     clientApiFetch(getToken, "/api/user/role")
       .then((r) => r.json())
       .then((d) => {
-        const next = d.profile ?? null;
+        const next = (d.profile ?? d) as UserProfile | null;
         setProfile(next);
         if (next) sessionStorage.setItem(ROLE_CACHE_KEY, JSON.stringify(next));
         else sessionStorage.removeItem(ROLE_CACHE_KEY);

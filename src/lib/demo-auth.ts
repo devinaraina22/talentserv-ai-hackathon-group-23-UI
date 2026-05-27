@@ -1,5 +1,9 @@
 import type { UserRole } from "./types";
-import { parsePatientSession } from "./demo-session";
+import {
+  parseDemoSession,
+  resolveDemoSessionPayload,
+  type DemoSessionPayload,
+} from "./demo-session";
 
 export const DEMO_BEARER = "demo-login-token";
 export const DEMO_SESSION_COOKIE = "medibook_demo_session";
@@ -35,6 +39,19 @@ export function clearDemoSession(): void {
   document.cookie = `${DEMO_SESSION_COOKIE}=; path=/; max-age=0; SameSite=Lax`;
 }
 
+function applyPayloadHeaders(headers: Record<string, string>, payload: DemoSessionPayload): void {
+  headers["X-Demo-Role"] = payload.role;
+  headers["X-Demo-Email"] = payload.email;
+  headers["X-Demo-Name"] = payload.name;
+  if (payload.department) headers["X-Demo-Department"] = payload.department;
+  if (payload.role === "Patient") {
+    headers["X-Demo-As-Patient"] = "true";
+  }
+  if (payload.staffId) {
+    headers["X-Demo-Staff-Id"] = payload.staffId;
+  }
+}
+
 export function demoAuthHeaders(session?: string | null): Record<string, string> {
   const resolved = session ?? getDemoSessionValue();
   if (!resolved) return {};
@@ -43,19 +60,24 @@ export function demoAuthHeaders(session?: string | null): Record<string, string>
     Authorization: `Bearer ${DEMO_BEARER}`,
   };
 
-  if (resolved === "patient" || resolved.startsWith("p:")) {
-    headers["X-Demo-As-Patient"] = "true";
-    if (resolved.startsWith("p:")) {
-      const payload = parsePatientSession(resolved);
-      if (payload) {
-        headers["X-Demo-Email"] = payload.email;
-        headers["X-Demo-Name"] = payload.name;
-      }
-    }
-  } else {
-    headers["X-Demo-Staff-Id"] = resolved;
+  const payload = resolveDemoSessionPayload(resolved) ?? parseDemoSession(resolved);
+  if (payload) {
+    applyPayloadHeaders(headers, payload);
+    return headers;
   }
 
+  if (resolved === "patient" || resolved.startsWith("p:")) {
+    headers["X-Demo-As-Patient"] = "true";
+    headers["X-Demo-Role"] = "Patient";
+    const legacy = resolveDemoSessionPayload(resolved);
+    if (legacy) {
+      headers["X-Demo-Email"] = legacy.email;
+      headers["X-Demo-Name"] = legacy.name;
+    }
+    return headers;
+  }
+
+  headers["X-Demo-Staff-Id"] = resolved;
   return headers;
 }
 

@@ -7,7 +7,7 @@ import {
   demoAuthHeaders,
   isDemoLoginEnabled,
 } from "./demo-auth";
-import { isPatientSession, parsePatientSession, demoPatientUserId } from "./demo-session";
+import { isPatientSession, parseDemoSession, demoSessionUserId, resolveDemoSessionPayload } from "./demo-session";
 import {
   E2E_ROLE_COOKIE,
   getE2eUser,
@@ -28,18 +28,21 @@ async function getDemoSessionUserFromCookie(): Promise<{
   const cookie = (await cookies()).get(DEMO_SESSION_COOKIE)?.value;
   if (!cookie) return null;
 
+  const payload = resolveDemoSessionPayload(cookie) ?? parseDemoSession(cookie);
+  if (payload) {
+    return {
+      userId: demoSessionUserId(payload),
+      email: payload.email,
+      name: payload.name,
+      role: payload.role,
+      department: payload.department,
+    };
+  }
+
   if (isPatientSession(cookie)) {
     if (cookie === "patient") {
       return { ...DEMO_PATIENT, role: "Patient" };
     }
-    const payload = parsePatientSession(cookie);
-    if (!payload) return null;
-    return {
-      userId: demoPatientUserId(payload.email),
-      email: payload.email,
-      name: payload.name,
-      role: "Patient",
-    };
   }
 
   try {
