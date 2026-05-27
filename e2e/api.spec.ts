@@ -88,6 +88,8 @@ test.describe("API — patients", () => {
         gender: "Male",
         phone_number: "123",
         email: "bad@example.com",
+        country: "India",
+        country_code: "IN",
         city: "Pune",
       },
     });
@@ -104,6 +106,8 @@ test.describe("API — patients", () => {
         gender: "Male",
         phone_number: "9876543211",
         email: "blocked@example.com",
+        country: "India",
+        country_code: "IN",
         city: "Pune",
       },
     });
@@ -120,6 +124,8 @@ test.describe("API — patients", () => {
         gender: "Female",
         phone_number: "9000000010",
         email: "e2e.patient@example.com",
+        country: "India",
+        country_code: "IN",
         city: "Pune",
       },
     });

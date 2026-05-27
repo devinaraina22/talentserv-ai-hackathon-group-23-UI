@@ -50,7 +50,9 @@ export default async function PatientDetailPage({
           <span className="text-slate-500">Email:</span> {patient.email}
         </p>
         <p>
-          <span className="text-slate-500">City:</span> {patient.city}
+          <span className="text-slate-500">Location:</span>{" "}
+          {[patient.city, patient.country ?? patient.country_code].filter(Boolean).join(", ") ||
+            "—"}
         </p>
       </div>
 

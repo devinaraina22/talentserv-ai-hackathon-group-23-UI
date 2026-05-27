@@ -19,13 +19,21 @@ export async function clientApiFetch(
   const e2eHeaders = isE2eClient() ? e2eAuthHeaders() : {};
   const token = isE2eClient() ? null : await getToken();
 
-  return fetch(apiUrl(path), {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...e2eHeaders,
-      ...init?.headers,
-    },
-  });
+  try {
+    return await fetch(apiUrl(path), {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...e2eHeaders,
+        ...init?.headers,
+      },
+    });
+  } catch (error) {
+    const message =
+      error instanceof TypeError && error.message.includes("fetch")
+        ? "Could not reach the API server. Make sure the backend is running on port 3001."
+        : "Network request failed.";
+    throw new Error(message);
+  }
 }

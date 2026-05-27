@@ -31,6 +31,8 @@ export default async function EditPatientPage({
           gender: patient.gender,
           phone_number: patient.phone_number,
           email: patient.email,
+          country: patient.country ?? "India",
+          country_code: patient.country_code ?? "IN",
           city: patient.city,
         }}
       />

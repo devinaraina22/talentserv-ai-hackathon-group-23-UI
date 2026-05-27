@@ -1,10 +1,11 @@
 "use client";
 
 import { useAppAuth } from "@/hooks/useAppAuth";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApiFetch } from "@/lib/api-client";
 import { GENDERS } from "@/lib/constants";
+import { CountryCitySelect } from "@/components/CountryCitySelect";
 import { AlertTriangle } from "lucide-react";
 
 type PatientFormData = {
@@ -14,8 +15,12 @@ type PatientFormData = {
   gender: string;
   phone_number: string;
   email: string;
+  country: string;
+  country_code: string;
   city: string;
 };
+
+const DEFAULT_COUNTRY = { country: "India", country_code: "IN" };
 
 export function PatientForm({
   initial,
@@ -26,6 +31,7 @@ export function PatientForm({
 }) {
   const router = useRouter();
   const { getToken } = useAppAuth();
+  const dupTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [form, setForm] = useState<PatientFormData>({
     patient_id: initial?.patient_id ?? "",
     full_name: initial?.full_name ?? "",
@@ -33,6 +39,8 @@ export function PatientForm({
     gender: initial?.gender ?? GENDERS[0],
     phone_number: initial?.phone_number ?? "",
     email: initial?.email ?? "",
+    country: initial?.country ?? DEFAULT_COUNTRY.country,
+    country_code: initial?.country_code ?? DEFAULT_COUNTRY.country_code,
     city: initial?.city ?? "",
   });
   const [error, setError] = useState<string | null>(null);
@@ -50,11 +58,28 @@ export function PatientForm({
       phone: form.phone_number,
     });
     if (mode === "edit") params.set("exclude", form.patient_id);
-    const res = await clientApiFetch(getToken, `/api/patients/check?${params}`);
-    const data = await res.json();
-    setDupWarning(data);
-    setForceDuplicate(false);
+    try {
+      const res = await clientApiFetch(getToken, `/api/patients/check?${params}`);
+      const data = await res.json();
+      setDupWarning(data);
+      setForceDuplicate(false);
+    } catch {
+      /* non-blocking */
+    }
   }, [form.email, form.phone_number, form.patient_id, mode, getToken]);
+
+  const scheduleDuplicateCheck = useCallback(() => {
+    if (dupTimer.current) clearTimeout(dupTimer.current);
+    dupTimer.current = setTimeout(() => {
+      void checkDuplicate();
+    }, 450);
+  }, [checkDuplicate]);
+
+  useEffect(() => {
+    return () => {
+      if (dupTimer.current) clearTimeout(dupTimer.current);
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -164,12 +189,12 @@ export function PatientForm({
         </div>
       </div>
       <div>
-        <label className="label">Phone (10 digits)</label>
+        <label className="label">Phone (local number)</label>
         <input
           className="input-field"
           value={form.phone_number}
           onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
-          onBlur={checkDuplicate}
+          onBlur={scheduleDuplicateCheck}
           required
         />
       </div>
@@ -180,19 +205,26 @@ export function PatientForm({
           className="input-field"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
-          onBlur={checkDuplicate}
+          onBlur={scheduleDuplicateCheck}
           required
         />
       </div>
-      <div>
-        <label className="label">City</label>
-        <input
-          className="input-field"
-          value={form.city}
-          onChange={(e) => setForm({ ...form, city: e.target.value })}
-          required
-        />
-      </div>
+
+      <CountryCitySelect
+        value={{
+          country_code: form.country_code,
+          country: form.country,
+          city: form.city,
+        }}
+        onChange={(loc) =>
+          setForm((f) => ({
+            ...f,
+            country_code: loc.country_code,
+            country: loc.country,
+            city: loc.city,
+          }))
+        }
+      />
 
       <button
         type="submit"

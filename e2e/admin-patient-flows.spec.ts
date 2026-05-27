@@ -9,15 +9,24 @@ async function fillPatientForm(
     phone: string;
     email: string;
     city: string;
+    countryCode?: string;
   }
 ) {
   const inputs = page.locator("form input.input-field");
   await inputs.nth(0).fill(data.patientId);
   await inputs.nth(1).fill(data.name);
   await inputs.nth(2).fill(data.age);
-  await inputs.nth(4).fill(data.phone);
-  await inputs.nth(5).fill(data.email);
-  await inputs.nth(6).fill(data.city);
+  await inputs.nth(3).fill(data.phone);
+  await inputs.nth(4).fill(data.email);
+
+  if (data.countryCode) {
+    await page.getByTestId("country-select").selectOption(data.countryCode);
+  }
+  const citySelect = page.getByTestId("city-select");
+  await expect(citySelect.locator(`option[value="${data.city}"]`)).toBeAttached({
+    timeout: 15_000,
+  });
+  await citySelect.selectOption(data.city);
 }
 
 test.describe("Admin UI flows (positive)", () => {

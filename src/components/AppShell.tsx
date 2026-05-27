@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   Bell,
@@ -11,117 +10,132 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
-import { DISCLAIMER } from "@/lib/constants";
 import { canAccessNav, ROLE_COLORS } from "@/lib/auth";
 import { isE2eClient } from "@/lib/e2e";
 import { useRole } from "./RoleProvider";
+import { AmbientBackground } from "./AmbientBackground";
+import { AssistWidgets } from "./AssistWidgets";
+import { BubbleNav, type BubbleNavItem } from "./BubbleNav";
+import { CircadianBadge } from "./CircadianBadge";
+import { MediBookLogo } from "./MediBookLogo";
+import { LegalFooter } from "./LegalFooter";
 import type { UserProfile } from "@/lib/types";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/appointments", label: "Appointments", icon: Calendar },
-  { href: "/availability", label: "Availability", icon: Stethoscope },
-  { href: "/reminders", label: "Reminders", icon: Bell },
-  { href: "/audit", label: "Audit Log", icon: ClipboardList },
+const navItems: Omit<BubbleNavItem, "testId">[] = [
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    description: "Stats & overview",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/patients",
+    label: "Patients",
+    description: "Register & profiles",
+    icon: Users,
+  },
+  {
+    href: "/appointments",
+    label: "Appointments",
+    description: "Book & manage visits",
+    icon: Calendar,
+  },
+  {
+    href: "/availability",
+    label: "Availability",
+    description: "Doctor time slots",
+    icon: Stethoscope,
+  },
+  {
+    href: "/reminders",
+    label: "Reminders",
+    description: "Email & SMS alerts",
+    icon: Bell,
+  },
+  {
+    href: "/audit",
+    label: "Audit",
+    description: "Activity history",
+    icon: ClipboardList,
+  },
 ];
 
-function SidebarUserPanel({ profile, role }: { profile: UserProfile | null; role: string }) {
+function TopUserChip({ profile, role }: { profile: UserProfile | null; role: string }) {
   if (isE2eClient()) {
     return (
-      <div className="mb-3 rounded-xl bg-white/5 p-3">
-        <p className="truncate text-sm font-medium">{profile?.name ?? "E2E User"}</p>
-        <p className="truncate text-xs text-slate-400">{profile?.email ?? ""}</p>
-        <span
-          className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
-          data-testid="user-role-badge"
-        >
-          {role}
-        </span>
+      <div className="top-user-chip">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold top-user-name">{profile?.name ?? "E2E User"}</p>
+          <span
+            className={`mt-0.5 inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
+            data-testid="user-role-badge"
+          >
+            {role}
+          </span>
+        </div>
       </div>
     );
   }
 
-  return <ClerkSidebarUserPanel role={role} />;
+  return <ClerkTopUserChip role={role} />;
 }
 
-function ClerkSidebarUserPanel({ role }: { role: string }) {
+function ClerkTopUserChip({ role }: { role: string }) {
   const { user } = useUser();
   return (
-    <>
-      <div className="mb-3 rounded-xl bg-white/5 p-3">
-        <p className="truncate text-sm font-medium">{user?.fullName ?? "User"}</p>
-        <p className="truncate text-xs text-slate-400">
-          {user?.primaryEmailAddress?.emailAddress}
-        </p>
+    <div className="top-user-chip flex items-center gap-3">
+      <div className="min-w-0 text-right">
+        <p className="truncate text-sm font-semibold top-user-name">{user?.fullName ?? "User"}</p>
         <span
-          className={`mt-2 inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
+          className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-medium ${ROLE_COLORS[role as keyof typeof ROLE_COLORS]}`}
           data-testid="user-role-badge"
         >
           {role}
         </span>
       </div>
       <UserButton afterSignOutUrl="/" />
-    </>
+    </div>
   );
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const { profile } = useRole();
   const role = profile?.role ?? "Receptionist";
-  const visibleNav = navItems.filter((item) => canAccessNav(role, item.href));
+  const visibleNav: BubbleNavItem[] = navItems
+    .filter((item) => canAccessNav(role, item.href))
+    .map((item) => ({
+      ...item,
+      testId: `nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`,
+    }));
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="glass-nav no-print flex w-64 shrink-0 flex-col text-white">
-        <div className="border-b border-white/10 p-6">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-teal-500 shadow-lg shadow-teal-500/30">
-              <span className="text-sm font-extrabold text-white">MB</span>
-            </div>
-            <div>
-              <p className="font-display text-lg leading-tight text-white">MediBook</p>
-              <p className="text-xs text-teal-200">Clinic</p>
-            </div>
-          </Link>
+    <div className="app-shell relative min-h-screen">
+      <AmbientBackground />
+
+      <header className="app-topbar no-print">
+        <Link href="/dashboard" className="brand-bubble">
+          <span className="brand-logo-wrap">
+            <MediBookLogo size={44} />
+          </span>
+          <span className="brand-bubble-text">
+            <span className="brand-name font-display">MediBook</span>
+            <span className="brand-tagline">Circadian-aware clinic care</span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-2">
+          <CircadianBadge />
+          <TopUserChip profile={profile} role={role} />
         </div>
+      </header>
 
-        <nav className="flex-1 space-y-1 p-4">
-          {visibleNav.map((item) => {
-            const Icon = item.icon;
-            const active = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-                  active
-                    ? "bg-gradient-to-r from-cyan-500/20 to-violet-500/20 text-white ring-1 ring-white/20"
-                    : "text-slate-400 hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+      <main className="app-main animate-fade-in">
+        <div className="app-content-glass">{children}</div>
+      </main>
 
-        <div className="border-t border-white/10 p-4">
-          <SidebarUserPanel profile={profile} role={role} />
-        </div>
-      </aside>
+      <LegalFooter className="app-footer no-print" />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="flex-1 overflow-auto p-6 lg:p-8 animate-fade-in">
-          {children}
-        </main>
-        <footer className="no-print border-t border-slate-200 bg-white px-6 py-3 text-center text-xs text-slate-500">
-          {DISCLAIMER}
-        </footer>
-      </div>
+      <BubbleNav items={visibleNav} />
+      <AssistWidgets authenticated />
     </div>
   );
 }

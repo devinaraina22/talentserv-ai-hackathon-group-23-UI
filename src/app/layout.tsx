@@ -4,10 +4,15 @@ import "./globals.css";
 import { DISCLAIMER } from "@/lib/constants";
 import { AppAuthProvider } from "@/hooks/useAppAuth";
 import { isE2eMode } from "@/lib/e2e";
+import { CircadianThemeProvider } from "@/components/CircadianThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Clinic Patient Booking",
+  title: "MediBook Clinic",
   description: DISCLAIMER,
+  icons: {
+    icon: "/logo/medibook-logo.svg",
+    apple: "/logo/medibook-logo.svg",
+  },
 };
 
 export const dynamic = "force-dynamic";
@@ -18,9 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const content = (
-    <html lang="en">
+    <html lang="en" data-circadian="morning" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
-        <AppAuthProvider>{children}</AppAuthProvider>
+        <CircadianThemeProvider>
+          <AppAuthProvider>{children}</AppAuthProvider>
+        </CircadianThemeProvider>
       </body>
     </html>
   );

@@ -2,6 +2,9 @@ import Link from "next/link";
 import { serverApiJson } from "@/lib/api-server";
 import { getSessionProfile } from "@/lib/session";
 import { PageHeader } from "@/components/PageHeader";
+import { CircadianInfoBanner } from "@/components/CircadianInfoBanner";
+import { SectionHeader } from "@/components/SectionHeader";
+import { StatCard } from "@/components/StatCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { DashboardStats } from "@/lib/types";
 import { Calendar, CheckCircle2, Clock, Users } from "lucide-react";
@@ -16,118 +19,126 @@ export default async function DashboardPage() {
   const statCards = [
     {
       title: "Total Appointments",
+      description: "All visits ever scheduled at your clinic",
       value: stats.totalAppointments,
       icon: Calendar,
-      color: "from-cyan-500 to-teal-500",
     },
     {
       title: "Today",
+      description: "Patients expected in the clinic today",
       value: stats.todaysAppointments,
       icon: Clock,
-      color: "from-violet-500 to-purple-500",
     },
     {
       title: "Booked",
+      description: "Upcoming visits not yet completed",
       value: stats.byStatus.Booked,
       icon: Users,
-      color: "from-blue-500 to-indigo-500",
     },
     {
       title: "Completed",
+      description: "Successfully finished appointments",
       value: stats.byStatus.Completed,
       icon: CheckCircle2,
-      color: "from-emerald-500 to-green-500",
     },
   ];
 
   return (
     <div>
       <PageHeader
-        title={`Good day, ${profile.name.split(" ")[0]}`}
-        subtitle={`${profile.role} overview — health details stay in patient & appointment views`}
+        emoji="👋"
+        badge="Dashboard"
+        title={`Hello, ${profile.name.split(" ")[0]}!`}
+        subtitle={`You're signed in as ${profile.role}. Colors adapt to the time of day to support your circadian rhythm — hover the phase badge in the header for details.`}
         action={
           profile.role !== "Patient" ? (
             <Link href="/appointments/new" className="btn-primary">
-              + Book Appointment
+              ✨ Book Appointment
             </Link>
           ) : null
         }
       />
 
+      <CircadianInfoBanner />
+
       <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {statCards.map((s) => {
-          const Icon = s.icon;
-          return (
-            <div
-              key={s.title}
-              className="card stat-glow overflow-hidden transition hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">{s.title}</p>
-                  <p className="mt-2 text-4xl font-bold text-slate-900">{s.value}</p>
-                </div>
-                <div
-                  className={`rounded-xl bg-gradient-to-br ${s.color} p-3 text-white shadow-lg`}
-                >
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {statCards.map((s, i) => (
+          <StatCard
+            key={s.title}
+            title={s.title}
+            description={s.description}
+            value={s.value}
+            icon={s.icon}
+            tintIndex={i}
+          />
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="card">
-          <h2 className="mb-4 font-semibold text-slate-900">By Status</h2>
+        <div className="card card-cute">
+          <SectionHeader
+            emoji="📊"
+            title="By Status"
+            description="See how many appointments are booked, done, or cancelled"
+          />
           <div className="space-y-3">
             {(["Booked", "Completed", "Cancelled"] as const).map((status) => (
-              <div key={status} className="flex items-center justify-between">
+              <div key={status} className="flex items-center justify-between rounded-xl bg-white/60 px-3 py-2">
                 <StatusBadge status={status} />
-                <span className="text-lg font-bold">{stats.byStatus[status]}</span>
+                <span className="text-lg font-bold text-[var(--cr-text)]">{stats.byStatus[status]}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="card">
-          <h2 className="mb-4 font-semibold text-slate-900">By Department</h2>
+        <div className="card card-cute">
+          <SectionHeader
+            emoji="🏥"
+            title="By Department"
+            description="Which specialties are busiest right now"
+          />
           <div className="space-y-2">
             {Object.entries(stats.byDepartment).map(([dept, count]) => (
-              <div key={dept} className="flex justify-between text-sm">
-                <span>{dept}</span>
-                <span className="font-bold">{count}</span>
+              <div
+                key={dept}
+                className="flex justify-between rounded-xl bg-white/60 px-3 py-2 text-sm"
+              >
+                <span className="text-[var(--cr-text-soft)]">{dept}</span>
+                <span className="font-bold text-[var(--cr-text)]">{count}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="card mt-6">
-        <h2 className="mb-4 font-semibold text-slate-900">Upcoming</h2>
+      <div className="card card-cute mt-6">
+        <SectionHeader
+          emoji="📅"
+          title="Upcoming Appointments"
+          description="The next patients on the schedule — click a name for full details"
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500">
-                <th className="pb-2">Patient</th>
-                <th className="pb-2">Department</th>
-                <th className="pb-2">When</th>
-                <th className="pb-2">Status</th>
+              <tr className="text-left text-[var(--cr-text-muted)]">
+                <th className="pb-2 font-medium">Patient</th>
+                <th className="pb-2 font-medium">Department</th>
+                <th className="pb-2 font-medium">When</th>
+                <th className="pb-2 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
               {stats.upcoming.map((a) => (
-                <tr key={a.appointment_id} className="border-t border-slate-100">
+                <tr key={a.appointment_id} className="border-t border-[var(--cr-border)]">
                   <td className="py-3">
                     <Link
                       href={`/appointments/${a.appointment_id}`}
-                      className="font-medium text-cyan-600 hover:underline"
+                      className="font-medium text-[var(--cr-accent)] hover:underline"
                     >
                       {a.patient_name}
                     </Link>
                   </td>
-                  <td className="py-3">{a.doctor_or_department}</td>
-                  <td className="py-3">
+                  <td className="py-3 text-[var(--cr-text-soft)]">{a.doctor_or_department}</td>
+                  <td className="py-3 text-[var(--cr-text-soft)]">
                     {a.appointment_date} {a.appointment_time}
                   </td>
                   <td className="py-3">

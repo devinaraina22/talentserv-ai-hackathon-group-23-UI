@@ -31,7 +31,7 @@ export default async function PatientsPage() {
               <th className="pb-2 pr-4">ID</th>
               <th className="pb-2 pr-4">Name</th>
               <th className="pb-2 pr-4">Age</th>
-              <th className="pb-2 pr-4">City</th>
+              <th className="pb-2 pr-4">Location</th>
               <th className="pb-2 pr-4">Phone</th>
               <th className="pb-2">Actions</th>
             </tr>
@@ -49,7 +49,10 @@ export default async function PatientsPage() {
                   <td className="py-2 pr-4 font-mono text-xs">{p.patient_id}</td>
                   <td className="py-2 pr-4">{p.full_name}</td>
                   <td className="py-2 pr-4">{p.age}</td>
-                  <td className="py-2 pr-4">{p.city}</td>
+                  <td className="py-2 pr-4">
+                    {p.city}
+                    {p.country ? `, ${p.country}` : ""}
+                  </td>
                   <td className="py-2 pr-4">{p.phone_number}</td>
                   <td className="py-2">
                     <Link

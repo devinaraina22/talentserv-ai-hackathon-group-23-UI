@@ -3,7 +3,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CLINIC, DISCLAIMER } from "@/lib/constants";
 import { UI } from "@/lib/user-messages";
-import { Activity, ArrowRight, Calendar, Shield } from "lucide-react";
+import { CIRCADIAN_PHASES } from "@/lib/circadian";
+import { Activity, ArrowRight, MessageCircle, Phone, Shield, Sparkles } from "lucide-react";
+import { AmbientBackground } from "@/components/AmbientBackground";
+import { AssistWidgets } from "@/components/AssistWidgets";
+import { CircadianInfoBanner } from "@/components/CircadianInfoBanner";
+import { LegalFooter } from "@/components/LegalFooter";
+import { MediBookLogo } from "@/components/MediBookLogo";
 
 export default async function HomePage() {
   if (process.env.E2E_TEST_MODE !== "true") {
@@ -11,57 +17,115 @@ export default async function HomePage() {
     if (userId) redirect("/dashboard");
   }
 
-  return (
-    <main className="relative min-h-screen overflow-hidden bg-[#0b1220] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/30 via-transparent to-transparent" />
-      <div className="pointer-events-none absolute -right-32 top-32 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
+  const phases = Object.entries(CIRCADIAN_PHASES).map(([key, p]) => ({ key, ...p }));
 
-      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-20">
-        <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-cyan-300">
-          <Shield className="h-4 w-4" />
+  const features = [
+    {
+      icon: Activity,
+      emoji: "📊",
+      label: "Live Dashboard",
+      desc: "Stats & upcoming visits — colours shift with your day",
+      theme: "feature-pink",
+    },
+    {
+      icon: MessageCircle,
+      emoji: "💬",
+      label: "AI Booking Chat",
+      desc: "Book appointments step-by-step through conversation",
+      theme: "feature-purple",
+    },
+    {
+      icon: Phone,
+      emoji: "📞",
+      label: "Call Support",
+      desc: "AI voice assistant for scheduling help",
+      theme: "feature-blue",
+    },
+    {
+      icon: Shield,
+      emoji: "🔒",
+      label: "Safe & Private",
+      desc: "Privacy policy, terms, and role-based access",
+      theme: "feature-mint",
+    },
+  ];
+
+  return (
+    <main className="relative min-h-screen overflow-hidden pb-24">
+      <AmbientBackground />
+      <AssistWidgets authenticated={false} />
+
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col justify-center px-6 py-20">
+        <span className="cute-badge mb-4 inline-flex w-fit items-center gap-2">
+          <MediBookLogo size={28} showBackground={false} className="cute-badge-logo" />
+          <Sparkles className="h-3.5 w-3.5 text-[var(--cr-accent)]" />
           {CLINIC.name}
-        </div>
-        <h1 className="font-display max-w-2xl text-5xl leading-tight md:text-6xl">
-          {UI.landingTagline}
+        </span>
+
+        <h1 className="landing-title max-w-2xl">
+          <span className="landing-title-gradient">{UI.landingTagline}</span>
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-slate-400">
-          Register patients, complete health intake, book appointments with real-time
-          availability, and receive email confirmations — all in one secure workspace
-          for your clinic team.
+
+        <p className="landing-subtitle mt-5 max-w-lg">
+          A circadian-aware clinic app — the interface automatically adjusts colour
+          temperature through four daily phases to support focus by day and sleep at night.
         </p>
-        <p className="mt-4 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-100">
-          {DISCLAIMER}
-        </p>
-        <div className="mt-10 flex flex-wrap gap-4">
-          <Link
-            href="/sign-in"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 px-8 py-3.5 font-semibold shadow-lg shadow-cyan-500/30 transition hover:shadow-cyan-500/50"
-          >
+
+        <div className="mt-6 max-w-lg">
+          <CircadianInfoBanner />
+        </div>
+
+        <p className="cute-notice mt-5 max-w-lg">{DISCLAIMER}</p>
+
+        <div className="mt-10 flex flex-wrap gap-3">
+          <Link href="/sign-in" className="btn-primary px-7 py-3.5 text-[15px]">
             Sign In <ArrowRight className="h-4 w-4" />
           </Link>
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-8 py-3.5 font-semibold transition hover:bg-white/5"
-          >
-            Create Account
+          <Link href="/sign-up" className="btn-secondary px-7 py-3.5 text-[15px]">
+            Create Free Account
           </Link>
         </div>
-        <div className="mt-16 grid gap-4 sm:grid-cols-3">
-          {[
-            { icon: Activity, label: "Live dashboard" },
-            { icon: Calendar, label: "Online booking" },
-            { icon: Shield, label: "Role-based access" },
-          ].map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur"
-            >
-              <Icon className="mb-2 h-6 w-6 text-cyan-400" />
-              <p className="font-medium">{label}</p>
+
+        <div className="mt-14">
+          <h2 className="section-title mb-3">🌈 Four phases, one day</h2>
+          <p className="section-desc mb-4 max-w-lg">
+            Light affects melatonin. This theme reduces blue light in the evening and night
+            while keeping peak contrast during work hours.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {phases.map((p) => (
+              <div key={p.key} className="feature-card">
+                <p className="feature-label">
+                  {p.emoji} {p.label}
+                </p>
+                <p className="text-[11px] font-semibold text-[var(--cr-accent)]">{p.hours}</p>
+                <p className="feature-desc mt-1">{p.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          {features.map(({ icon: Icon, emoji, label, desc, theme }) => (
+            <div key={label} className={`feature-card ${theme}`}>
+              <div className="flex items-start gap-3">
+                <div className="feature-icon">
+                  <Icon className="h-5 w-5" strokeWidth={2} />
+                </div>
+                <div>
+                  <p className="feature-label">
+                    <span aria-hidden>{emoji} </span>
+                    {label}
+                  </p>
+                  <p className="feature-desc">{desc}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </div>
+
+      <LegalFooter className="relative z-10 mx-auto max-w-4xl px-6 pb-8 !static !transform-none" />
     </main>
   );
 }
