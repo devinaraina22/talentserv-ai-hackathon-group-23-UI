@@ -8,22 +8,23 @@ import { Shield } from "lucide-react";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { getToken, isLoaded } = useAppAuth();
+  const { getToken, isLoaded, isSignedIn } = useAppAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !isSignedIn) return;
 
-    clientApiFetch(getToken, "/api/user/role")
-      .then((res) => {
+    clientApiFetch(getToken, "/api/user/role", { method: "POST" })
+      .then(async (res) => {
         if (res.ok) {
           router.replace("/dashboard");
           return;
         }
-        setError("Could not finish setup. Please refresh and try again.");
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(body.error ?? "Could not finish setup. Please refresh and try again.");
       })
       .catch(() => setError("Could not finish setup. Please refresh and try again."));
-  }, [getToken, isLoaded, router]);
+  }, [getToken, isLoaded, isSignedIn, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950 p-6">
