@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { DISCLAIMER } from "@/lib/constants";
 import { AppAuthProvider } from "@/hooks/useAppAuth";
+import { isE2eMode } from "@/lib/e2e";
 
 export const metadata: Metadata = {
   title: "Clinic Patient Booking",
@@ -10,10 +11,6 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-dynamic";
-
-const clerkPublishableKey =
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
-  "pk_test_ci_placeholder_key_012345678901234567890";
 
 export default function RootLayout({
   children,
@@ -28,8 +25,9 @@ export default function RootLayout({
     </html>
   );
 
-  if (process.env.E2E_TEST_MODE === "true") {
-    return <ClerkProvider publishableKey={clerkPublishableKey}>{content}</ClerkProvider>;
+  // CI e2e uses cookie-based auth — Clerk rejects placeholder keys if Provider mounts.
+  if (isE2eMode()) {
+    return content;
   }
 
   return <ClerkProvider>{content}</ClerkProvider>;

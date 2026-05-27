@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  // Prevent Next.js from treating the checked-out backend/ folder in CI as part of this app.
-  outputFileTracingRoot: path.join(__dirname),
+  // Monorepo-style: ignore backend/ lockfile checked out beside UI in CI e2e.
+  outputFileTracingRoot: path.resolve(__dirname),
 };
 
 export default nextConfig;
