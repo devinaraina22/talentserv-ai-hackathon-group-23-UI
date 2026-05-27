@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { DISCLAIMER } from "@/lib/constants";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { clerkAppearance, clerkLocalization } from "@/lib/clerk-appearance";
 import { AppAuthProvider } from "@/hooks/useAppAuth";
 import { isE2eMode } from "@/lib/e2e";
 import { CircadianThemeProvider } from "@/components/CircadianThemeProvider";
@@ -38,5 +38,9 @@ export default function RootLayout({
     return content;
   }
 
-  return <ClerkProvider appearance={clerkAppearance}>{content}</ClerkProvider>;
+  return (
+    <ClerkProvider appearance={clerkAppearance} localization={clerkLocalization}>
+      {content}
+    </ClerkProvider>
+  );
 }

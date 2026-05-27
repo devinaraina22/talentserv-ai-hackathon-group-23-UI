@@ -7,6 +7,7 @@ import {
   Calendar,
   ClipboardList,
   LayoutDashboard,
+  Shield,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -57,6 +58,12 @@ const navItems: Omit<BubbleNavItem, "testId">[] = [
     label: "Audit",
     description: "Activity history",
     icon: ClipboardList,
+  },
+  {
+    href: "/staff",
+    label: "Staff Access",
+    description: "Assign roles by email",
+    icon: Shield,
   },
 ];
 

@@ -815,6 +815,14 @@ body {
 .app-content-glass .border-slate-200 { border-color: var(--cr-border) !important; }
 .app-content-glass .text-cyan-600 { color: var(--cr-accent) !important; }
 
+/* Clerk auth: hide dev-instance badge when appearance API does not suppress it */
+.cl-signIn-root [class*="development"],
+.cl-signUp-root [class*="development"],
+.cl-signIn-root [data-localization-key*="development"],
+.cl-signUp-root [data-localization-key*="development"] {
+  display: none !important;
+}
+
 @media print { .no-print { display: none !important; } }
 
 @media (max-width: 640px) {
